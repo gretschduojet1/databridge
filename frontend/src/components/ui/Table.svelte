@@ -1,6 +1,4 @@
 <script>
-  import * as XLSX from 'xlsx'
-
   export let columns = []
   export let rows = []
   export let total = 0
@@ -9,10 +7,12 @@
   export let sortBy = null
   export let sortOrder = 'asc'
   export let loading = false
-  export let exportName = 'export'
 
-  export let onSort = () => {}
-  export let onPage = () => {}
+  export let onSort   = () => {}
+  export let onPage   = () => {}
+  export let onExport = null   // if provided, called instead of client-side export
+
+  let exporting = false
 
   $: totalPages = Math.ceil(total / pageSize)
 
@@ -25,14 +25,14 @@
     }
   }
 
-  function exportExcel() {
-    const data = rows.map(row =>
-      Object.fromEntries(columns.map(col => [col.label, row[col.key] ?? '']))
-    )
-    const ws = XLSX.utils.json_to_sheet(data)
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, exportName)
-    XLSX.writeFile(wb, `${exportName}.xlsx`)
+  async function handleExport() {
+    if (!onExport) return
+    exporting = true
+    try {
+      await onExport()
+    } finally {
+      exporting = false
+    }
   }
 </script>
 
@@ -42,13 +42,14 @@
       {total.toLocaleString()} <span class="text-surface-300">results</span>
     </span>
     <button
-      on:click={exportExcel}
-      class="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors"
+      on:click={handleExport}
+      disabled={!onExport || exporting}
+      class="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40"
     >
       <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
         <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
       </svg>
-      Export
+      {exporting ? 'Queuing…' : 'Export'}
     </button>
   </div>
 

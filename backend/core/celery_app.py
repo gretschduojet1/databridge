@@ -5,7 +5,7 @@ celery_app = Celery(
     "databridge",
     broker=settings.redis_url,
     backend=settings.redis_url,
-    include=["tasks.reports", "tasks.sync", "tasks.sweeper"],
+    include=["tasks.reports", "tasks.exports", "tasks.sweeper"],
 )
 
 celery_app.conf.update(

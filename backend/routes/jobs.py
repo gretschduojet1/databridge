@@ -27,16 +27,21 @@ def dispatch_report(
     return DispatchResponse(job_id=job.id, status=job.status)
 
 
-@router.post("/dispatch/sync", response_model=DispatchResponse)
-def dispatch_sync(
-    batch_size: int = 10,
-    _: User = Depends(get_current_user),
+
+@router.post("/dispatch/export", response_model=DispatchResponse)
+def dispatch_export(
+    resource: str,
+    current_user: User = Depends(get_current_user),
     repo: PostgresJobRepository = Depends(get_repo),
 ):
-    """Enqueue a simulated customer sync from the upstream CRM."""
+    """Enqueue a full dataset export. Result is emailed to the requesting user."""
+    if resource not in ("customers", "products", "orders"):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail=f"Unknown resource: {resource}")
     job_id = str(uuid.uuid4())
-    job = repo.create(job_id, "simulate_customer_sync", {"batch_size": batch_size})
-    dispatch("sync.customers", {"job_id": job_id, "batch_size": batch_size})
+    payload = {"resource": resource, "email": current_user.email}
+    job = repo.create(job_id, "export_resource", payload)
+    dispatch("export.requested", {"job_id": job_id, **payload})
     return DispatchResponse(job_id=job.id, status=job.status)
 
 

@@ -37,6 +37,10 @@
 
   function handleSort(key, order) { sortBy = key; sortOrder = order; page = 0; load() }
   function handlePage(p) { page = p; load() }
+
+  async function handleExport() {
+    await apiFetch('/jobs/dispatch/export?resource=products', { method: 'POST' })
+  }
 </script>
 
 <div class="p-8 flex flex-col gap-6">
@@ -59,8 +63,8 @@
 
   <Table
     {columns} {rows} {total} {page} {pageSize} {sortBy} {sortOrder} {loading}
-    exportName="products"
     onSort={handleSort}
     onPage={handlePage}
+    onExport={handleExport}
   />
 </div>

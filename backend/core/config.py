@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     database_url: str
     secret_key: str
     redis_url: str
+    smtp_host: str = "mailhog"
+    smtp_port: int = 1025
+    mail_from: str = "databridge@localhost"
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
 

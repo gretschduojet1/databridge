@@ -16,11 +16,11 @@ def sweep_stuck_jobs():
     """
     # Import here to avoid circular imports at module load time
     from tasks.reports import generate_summary_report
-    from tasks.sync import simulate_customer_sync
+    from tasks.exports import export_resource
 
     task_map = {
         "generate_summary_report": generate_summary_report,
-        "simulate_customer_sync":  simulate_customer_sync,
+        "export_resource":         export_resource,
     }
 
     db = SessionLocal()

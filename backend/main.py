@@ -5,7 +5,7 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from routes import customers, products, orders, auth, reports, jobs
 import tasks.reports   # noqa: F401 — registers event handlers
-import tasks.sync      # noqa: F401
+import tasks.exports   # noqa: F401
 import tasks.sweeper   # noqa: F401
 
 limiter = Limiter(key_func=get_remote_address)

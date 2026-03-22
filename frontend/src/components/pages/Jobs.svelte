@@ -22,8 +22,7 @@
   async function dispatch(type) {
     dispatching = type
     try {
-      const url = type === 'report' ? '/jobs/dispatch/report' : '/jobs/dispatch/sync?batch_size=10'
-      await apiFetch(url, { method: 'POST' })
+      await apiFetch(`/jobs/dispatch/${type}`, { method: 'POST' })
       await load()
       startPolling()
     } finally {
@@ -99,20 +98,16 @@
     </div>
 
     <div class="bg-white rounded-2xl border border-surface-100 shadow-sm p-6">
-      <div class="inline-flex bg-teal-50 rounded-xl p-2.5 mb-4">
-        <svg class="w-5 h-5 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+      <div class="inline-flex bg-surface-50 rounded-xl p-2.5 mb-4">
+        <svg class="w-5 h-5 text-surface-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       </div>
-      <p class="text-sm font-semibold text-surface-900 mb-1">Sync Customers</p>
-      <p class="text-xs text-surface-400 mb-4">Simulates pulling a batch of 10 new customers from an upstream CRM system.</p>
-      <button
-        on:click={() => dispatch('sync')}
-        disabled={dispatching === 'sync'}
-        class="w-full bg-teal-500 text-white text-sm font-medium py-2 rounded-xl hover:bg-teal-600 transition-colors disabled:opacity-50 shadow-sm shadow-teal-500/20"
-      >
-        {dispatching === 'sync' ? 'Queuing…' : 'Run now'}
-      </button>
+      <p class="text-sm font-semibold text-surface-900 mb-1">Data Sync</p>
+      <p class="text-xs text-surface-400 mb-4">
+        In production, data pipelines are orchestrated by Airflow. Sync jobs appear here automatically as they run.
+      </p>
+      <div class="w-full text-center text-xs text-surface-300 py-1.5">Managed by Airflow</div>
     </div>
   </div>
 
