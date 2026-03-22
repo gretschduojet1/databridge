@@ -156,23 +156,19 @@ docker compose exec db psql -U databridge -d databridge
 - Excel export on every data view ✅
 - Badge components for regions, categories, and roles ✅
 
-**Phase 4 — Search & Filtering**
-- Full-text search across customers, products, and orders
-- Search backend options under evaluation:
-  - **Postgres full-text search** (`tsvector`/`tsquery`) — zero new infrastructure, reasonable for this data volume
-  - **Meilisearch** — typo-tolerant, fast, easy to self-host as a fourth Docker service
-  - **Typesense** — similar to Meilisearch, more opinionated schema
-  - **Elasticsearch** — most powerful but heavy for this scale
-  - The repository pattern means the search implementation is swappable without touching routes
-- Enhanced report filters: date ranges, multi-select regions/categories, revenue thresholds
-- Saved filter presets per user
-
-**Phase 5 — Background Jobs**
+**Phase 4 — Background Jobs**
 - Event dispatch system: API routes fire events, workers pick them up asynchronously
 - Job queue with Celery + Redis (or lightweight alternative like ARQ)
 - Initial use cases: scheduled report generation, simulated data sync from source systems, bulk exports
 - Job status tracking so the UI can poll for progress and show completion state
 - Webhook support for notifying external systems when jobs finish
+
+**Phase 5 — Search & Filtering**
+- Full-text search across customers, products, and orders
+- Search backend options under evaluation: Postgres full-text search, Meilisearch, Typesense, Elasticsearch
+- The repository pattern means the search implementation is swappable without touching routes
+- Enhanced report filters: date ranges, multi-select regions/categories, revenue thresholds
+- Saved filter presets per user
 
 **Phase 6 — AWS Deployment (Free Tier)**
 - **RDS Postgres** (db.t3.micro) — replaces the local db container; free for 12 months
