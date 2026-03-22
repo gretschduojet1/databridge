@@ -172,7 +172,18 @@ docker compose exec db psql -U databridge -d databridge
 - Enhanced report filters: date ranges, multi-select regions/categories, revenue thresholds
 - Saved filter presets per user
 
-**Phase 6 — AWS Deployment (Free Tier)**
+**Phase 6 — Developer Experience**
+- Committed Postman collection covering all endpoints with example requests and environment variables pre-configured
+- `.env.example` values wired into the Postman environment so auth and base URL work out of the box
+
+**Phase 7 — Observability & Polish**
+- Structured JSON logging with request IDs for traceability
+- Health check endpoint that validates live DB connectivity
+- Consistent error response schema across all endpoints
+- Responsive mobile layout
+- Dark mode
+
+**Phase 8 — AWS Deployment (Free Tier)**
 - **RDS Postgres** (db.t3.micro) — replaces the local db container; free for 12 months
 - **ECS Fargate or EC2 t2.micro** — runs the backend and frontend containers
 - **Secrets Manager or Parameter Store** — replaces `.env`; secrets are never stored in files
@@ -180,14 +191,3 @@ docker compose exec db psql -U databridge -d databridge
 - **VPC + security groups** — backend not publicly exposed, reachable only through the load balancer
 - **GitHub Actions CI/CD** — tests run on every PR, deploy to AWS on merge to main
 - Target cost: within AWS free tier for demo/interview workloads
-
-**Phase 7 — Developer Experience**
-- Committed Postman collection covering all endpoints with example requests and environment variables pre-configured
-- `.env.example` values wired into the Postman environment so auth and base URL work out of the box
-
-**Phase 8 — Observability & Polish**
-- Structured JSON logging with request IDs for traceability
-- Health check endpoint that validates live DB connectivity
-- Consistent error response schema across all endpoints
-- Responsive mobile layout
-- Dark mode
