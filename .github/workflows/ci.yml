@@ -73,7 +73,7 @@ jobs:
           path: code-coverage-results.md
 
   frontend:
-    name: Frontend — lint, type-check, test
+    name: Frontend — lint, type-check
     runs-on: ubuntu-latest
 
     steps:
