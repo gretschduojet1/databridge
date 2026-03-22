@@ -64,7 +64,7 @@
         </svg>
         {link.label}
         {#if link.key === 'jobs' && $activeJobCount > 0}
-          <span class="ml-auto text-xs font-semibold bg-amber-400 text-white rounded-full w-5 h-5 flex items-center justify-center">
+          <span class="ml-auto text-xs font-semibold bg-amber-700/40 text-amber-200 rounded-full w-5 h-5 flex items-center justify-center">
             {$activeJobCount}
           </span>
         {/if}
