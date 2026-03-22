@@ -10,9 +10,12 @@ from datetime import datetime, timedelta, timezone
 from faker import Faker
 from sqlalchemy.orm import Session
 from core.database import SessionLocal
+from core.security import hash_password
+from models.user import User
 from models.customer import Customer
 from models.product import Product
 from models.order import Order
+from schemas.enums import Role
 
 fake = Faker()
 random.seed(42)
@@ -38,6 +41,22 @@ def seed(db: Session) -> None:
     db.query(Order).delete()
     db.query(Customer).delete()
     db.query(Product).delete()
+    db.query(User).delete()
+    db.commit()
+
+    print("Seeding demo users...")
+    db.add(User(
+        email="admin@databridge.io",
+        hashed_password=hash_password("admin"),
+        role=Role.ADMIN,
+        created_at=datetime.now(timezone.utc),
+    ))
+    db.add(User(
+        email="demo@databridge.io",
+        hashed_password=hash_password("demo"),
+        role=Role.VIEWER,
+        created_at=datetime.now(timezone.utc),
+    ))
     db.commit()
 
     print("Seeding customers...")
@@ -81,7 +100,7 @@ def seed(db: Session) -> None:
         db.add(o)
     db.commit()
 
-    print("Done. Customers: 200 | Products: 15 | Orders: 500")
+    print("Done. Users: 2 | Customers: 200 | Products: 15 | Orders: 500")
 
 
 if __name__ == "__main__":

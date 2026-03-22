@@ -12,3 +12,8 @@ class Category(str, Enum):
     ELECTRONICS = "Electronics"
     OFFICE = "Office"
     SUPPLIES = "Supplies"
+
+
+class Role(str, Enum):
+    ADMIN = "admin"
+    VIEWER = "viewer"
