@@ -36,7 +36,7 @@ jobs:
 
       - name: Test (pytest + coverage)
         working-directory: backend
-        run: python -m pytest --cov=. --cov-report=term-missing --cov-report=xml --cov-config=pyproject.toml
+        run: python -m pytest --cov=. --cov-report=term-missing --cov-report=xml --cov-config=pyproject.toml --cov-fail-under=80
         env:
           SECRET_KEY: ci-test-secret-key-not-used-in-prod
           DATABASE_URL: sqlite:///./test.db

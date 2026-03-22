@@ -13,12 +13,8 @@ from main import app
 from models.user import User
 from schemas.enums import Role
 
-# Postgres schema names the models declare in __table_args__
 SCHEMAS = ["customers", "inventory", "sales", "auth", "workers"]
 
-# StaticPool means a single connection is reused for the entire session.
-# That way ATTACH DATABASE (below) and CREATE TABLE both run on the same
-# connection and are visible to every subsequent query.
 engine = create_engine(
     "sqlite:///:memory:",
     connect_args={"check_same_thread": False},
@@ -31,7 +27,6 @@ _FAKE_USER = User(id=1, email="test@example.com", hashed_password="x", role=Role
 
 @event.listens_for(engine, "connect")
 def attach_schemas(dbapi_connection: Any, connection_record: Any) -> None:
-    """Create a separate in-memory SQLite DB for each Postgres schema."""
     for schema in SCHEMAS:
         dbapi_connection.execute(f"ATTACH DATABASE ':memory:' AS \"{schema}\"")
 
@@ -45,12 +40,24 @@ def setup_database() -> Generator[None, None, None]:
 
 @pytest.fixture
 def db() -> Generator[Session, None, None]:
-    session = TestingSessionLocal()
+    # Wrap each test in a savepoint so that repo-level commits don't persist
+    # across tests — rolling back the outer transaction cleans everything up.
+    connection = engine.connect()
+    outer = connection.begin()
+    session = TestingSessionLocal(bind=connection)
+    session.begin_nested()
+
+    @event.listens_for(session, "after_transaction_end")
+    def restart_savepoint(sess: Any, trans: Any) -> None:
+        if trans.nested and not trans._parent.nested:
+            sess.begin_nested()
+
     try:
         yield session
     finally:
-        session.rollback()
         session.close()
+        outer.rollback()
+        connection.close()
 
 
 @pytest.fixture
