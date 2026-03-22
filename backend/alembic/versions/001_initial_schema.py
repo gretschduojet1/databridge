@@ -21,7 +21,12 @@ def upgrade() -> None:
     op.execute("CREATE SCHEMA IF NOT EXISTS inventory")
     op.execute("CREATE SCHEMA IF NOT EXISTS auth")
 
-    op.execute("CREATE TYPE IF NOT EXISTS auth.user_role AS ENUM ('admin', 'viewer')")
+    op.execute("""
+    DO $$ BEGIN
+        CREATE TYPE auth.user_role AS ENUM ('admin', 'viewer');
+    EXCEPTION WHEN duplicate_object THEN NULL;
+    END $$;
+    """)
 
     op.create_table(
         "customers",
