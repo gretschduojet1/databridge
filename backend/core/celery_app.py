@@ -5,7 +5,7 @@ celery_app = Celery(
     "databridge",
     broker=settings.redis_url,
     backend=settings.redis_url,
-    include=["tasks.reports", "tasks.sync"],
+    include=["tasks.reports", "tasks.sync", "tasks.sweeper"],
 )
 
 celery_app.conf.update(
@@ -14,4 +14,10 @@ celery_app.conf.update(
     accept_content=["json"],
     timezone="UTC",
     enable_utc=True,
+    beat_schedule={
+        "sweep-stuck-jobs": {
+            "task": "tasks.sweeper.sweep_stuck_jobs",
+            "schedule": 60.0,  # every 60 seconds
+        },
+    },
 )
