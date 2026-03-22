@@ -41,13 +41,16 @@
   function handlePage(p) { page = p; load() }
 </script>
 
-<div class="p-6 flex flex-col gap-4">
-  <div class="flex items-center justify-between">
-    <h2 class="text-lg font-semibold text-surface-900">Customers</h2>
+<div class="p-8 flex flex-col gap-6">
+  <div class="flex items-start justify-between">
+    <div>
+      <h2 class="text-xl font-bold text-surface-900">Customers</h2>
+      <p class="text-sm text-surface-400 mt-0.5">All registered customers</p>
+    </div>
     <select
       bind:value={region}
       on:change={() => { page = 0; load() }}
-      class="text-sm border border-surface-200 rounded-mac px-3 py-1.5 text-surface-700 focus:outline-none focus:ring-2 focus:ring-accent"
+      class="text-sm border border-surface-200 rounded-xl px-3 py-2 text-surface-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white"
     >
       <option value="">All Regions</option>
       <option>Northeast</option>

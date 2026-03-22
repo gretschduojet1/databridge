@@ -21,8 +21,9 @@
         labels: data.map(d => d.label),
         datasets: [{
           data: data.map(d => d.value),
-          backgroundColor: '#0071e3',
-          borderRadius: 4,
+          backgroundColor: 'rgba(99, 102, 241, 0.85)',
+          hoverBackgroundColor: 'rgba(99, 102, 241, 1)',
+          borderRadius: 6,
           borderSkipped: false,
         }],
       },
@@ -33,8 +34,8 @@
           title: { display: false },
         },
         scales: {
-          x: { grid: { display: false }, border: { display: false } },
-          y: { grid: { color: '#f5f5f7' }, border: { display: false } },
+          x: { grid: { display: false }, border: { display: false }, ticks: { color: '#94a3b8' } },
+          y: { grid: { color: '#f1f5f9' }, border: { display: false }, ticks: { color: '#94a3b8' } },
         },
       },
     })
@@ -43,9 +44,9 @@
   onDestroy(() => chart?.destroy())
 </script>
 
-<div class="bg-white rounded-mac border border-surface-100 shadow-sm p-5">
+<div class="bg-white rounded-2xl border border-surface-100 shadow-sm p-6">
   {#if title}
-    <p class="text-xs font-medium text-surface-400 uppercase tracking-wide mb-4">{title}</p>
+    <p class="text-sm font-semibold text-surface-700 mb-5">{title}</p>
   {/if}
   <canvas bind:this={canvas}></canvas>
 </div>

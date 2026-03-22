@@ -10,11 +10,11 @@
   let category = ''
 
   const columns = [
-    { key: 'sku',           label: 'SKU',           sortable: true },
-    { key: 'name',          label: 'Name',          sortable: true },
-    { key: 'category',      label: 'Category',      sortable: true, render: Badge },
-    { key: 'stock_qty',     label: 'Stock',         sortable: true },
-    { key: 'reorder_level', label: 'Reorder At',    sortable: false },
+    { key: 'sku',           label: 'SKU',        sortable: true },
+    { key: 'name',          label: 'Name',        sortable: true },
+    { key: 'category',      label: 'Category',    sortable: true, render: Badge },
+    { key: 'stock_qty',     label: 'Stock',       sortable: true },
+    { key: 'reorder_level', label: 'Reorder At',  sortable: false },
   ]
 
   async function load() {
@@ -39,13 +39,16 @@
   function handlePage(p) { page = p; load() }
 </script>
 
-<div class="p-6 flex flex-col gap-4">
-  <div class="flex items-center justify-between">
-    <h2 class="text-lg font-semibold text-surface-900">Products</h2>
+<div class="p-8 flex flex-col gap-6">
+  <div class="flex items-start justify-between">
+    <div>
+      <h2 class="text-xl font-bold text-surface-900">Products</h2>
+      <p class="text-sm text-surface-400 mt-0.5">Inventory catalog</p>
+    </div>
     <select
       bind:value={category}
       on:change={() => { page = 0; load() }}
-      class="text-sm border border-surface-200 rounded-mac px-3 py-1.5 text-surface-700 focus:outline-none focus:ring-2 focus:ring-accent"
+      class="text-sm border border-surface-200 rounded-xl px-3 py-2 text-surface-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white"
     >
       <option value="">All Categories</option>
       <option>Electronics</option>

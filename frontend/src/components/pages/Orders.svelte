@@ -9,13 +9,13 @@
   let dateFrom = '', dateTo = ''
 
   const columns = [
-    { key: 'id',          label: 'Order #',   sortable: false },
-    { key: 'customer_id', label: 'Customer',  sortable: false },
-    { key: 'product_id',  label: 'Product',   sortable: false },
-    { key: 'quantity',    label: 'Qty',       sortable: true },
+    { key: 'id',          label: 'Order #',    sortable: false },
+    { key: 'customer_id', label: 'Customer',   sortable: false },
+    { key: 'product_id',  label: 'Product',    sortable: false },
+    { key: 'quantity',    label: 'Qty',        sortable: true },
     { key: 'unit_price',  label: 'Unit Price', sortable: true },
-    { key: 'total',       label: 'Total',     sortable: false },
-    { key: 'ordered_at',  label: 'Date',      sortable: true },
+    { key: 'total',       label: 'Total',      sortable: false },
+    { key: 'ordered_at',  label: 'Date',       sortable: true },
   ]
 
   async function load() {
@@ -46,20 +46,23 @@
   function handlePage(p) { page = p; load() }
 </script>
 
-<div class="p-6 flex flex-col gap-4">
-  <div class="flex items-center justify-between flex-wrap gap-3">
-    <h2 class="text-lg font-semibold text-surface-900">Orders</h2>
+<div class="p-8 flex flex-col gap-6">
+  <div class="flex items-start justify-between flex-wrap gap-3">
+    <div>
+      <h2 class="text-xl font-bold text-surface-900">Orders</h2>
+      <p class="text-sm text-surface-400 mt-0.5">Sales transaction history</p>
+    </div>
     <div class="flex items-center gap-2 text-sm">
       <input
         type="date" bind:value={dateFrom}
         on:change={() => { page = 0; load() }}
-        class="border border-surface-200 rounded-mac px-3 py-1.5 text-surface-700 focus:outline-none focus:ring-2 focus:ring-accent"
+        class="border border-surface-200 rounded-xl px-3 py-2 text-surface-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white"
       />
-      <span class="text-surface-300">to</span>
+      <span class="text-surface-300">—</span>
       <input
         type="date" bind:value={dateTo}
         on:change={() => { page = 0; load() }}
-        class="border border-surface-200 rounded-mac px-3 py-1.5 text-surface-700 focus:outline-none focus:ring-2 focus:ring-accent"
+        class="border border-surface-200 rounded-xl px-3 py-2 text-surface-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white"
       />
     </div>
   </div>

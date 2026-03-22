@@ -1,7 +1,6 @@
 <script>
   import * as XLSX from 'xlsx'
 
-  // columns: [{ key, label, sortable?, render? }]
   export let columns = []
   export let rows = []
   export let total = 0
@@ -37,53 +36,62 @@
   }
 </script>
 
-<div class="bg-white rounded-mac border border-surface-100 shadow-sm overflow-hidden">
-  <div class="flex items-center justify-between px-5 py-3 border-b border-surface-100">
-    <span class="text-xs text-surface-400">{total.toLocaleString()} results</span>
+<div class="bg-white rounded-2xl border border-surface-100 shadow-sm overflow-hidden">
+  <div class="flex items-center justify-between px-6 py-4 border-b border-surface-100">
+    <span class="text-sm font-medium text-surface-500">
+      {total.toLocaleString()} <span class="text-surface-300">results</span>
+    </span>
     <button
       on:click={exportExcel}
-      class="text-xs text-accent hover:underline"
+      class="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors"
     >
-      Export Excel
+      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+      </svg>
+      Export
     </button>
   </div>
 
   <div class="overflow-x-auto">
     <table class="w-full text-sm">
       <thead>
-        <tr class="border-b border-surface-100">
+        <tr class="bg-surface-50 border-b border-surface-100">
           {#each columns as col}
             <th
-              class="px-5 py-3 text-left text-xs font-medium text-surface-400 uppercase tracking-wide whitespace-nowrap
-                {col.sortable ? 'cursor-pointer select-none hover:text-surface-600' : ''}"
+              class="px-6 py-3 text-left text-xs font-semibold text-surface-500 uppercase tracking-wide whitespace-nowrap
+                {col.sortable ? 'cursor-pointer select-none hover:text-surface-800' : ''}"
               on:click={() => handleSort(col)}
             >
-              {col.label}
-              {#if col.sortable && sortBy === col.key}
-                <span class="ml-1">{sortOrder === 'asc' ? '↑' : '↓'}</span>
-              {/if}
+              <span class="flex items-center gap-1">
+                {col.label}
+                {#if col.sortable}
+                  <span class="text-surface-300 {sortBy === col.key ? 'text-indigo-500' : ''}">
+                    {sortBy === col.key ? (sortOrder === 'asc' ? '↑' : '↓') : '↕'}
+                  </span>
+                {/if}
+              </span>
             </th>
           {/each}
         </tr>
       </thead>
-      <tbody>
+      <tbody class="divide-y divide-surface-50">
         {#if loading}
           <tr>
-            <td colspan={columns.length} class="px-5 py-8 text-center text-sm text-surface-300">
+            <td colspan={columns.length} class="px-6 py-10 text-center text-sm text-surface-300">
               Loading…
             </td>
           </tr>
         {:else if rows.length === 0}
           <tr>
-            <td colspan={columns.length} class="px-5 py-8 text-center text-sm text-surface-300">
+            <td colspan={columns.length} class="px-6 py-10 text-center text-sm text-surface-300">
               No results
             </td>
           </tr>
         {:else}
           {#each rows as row}
-            <tr class="border-b border-surface-50 hover:bg-surface-50 transition-colors">
+            <tr class="hover:bg-surface-50/60 transition-colors">
               {#each columns as col}
-                <td class="px-5 py-3 text-surface-700 whitespace-nowrap">
+                <td class="px-6 py-3.5 text-surface-700 whitespace-nowrap">
                   {#if col.render}
                     <svelte:component this={col.render} value={row[col.key]} />
                   {:else}
@@ -99,7 +107,7 @@
   </div>
 
   {#if totalPages > 1}
-    <div class="flex items-center justify-between px-5 py-3 border-t border-surface-100">
+    <div class="flex items-center justify-between px-6 py-4 border-t border-surface-100 bg-surface-50/50">
       <span class="text-xs text-surface-400">
         Page {page + 1} of {totalPages}
       </span>
@@ -107,16 +115,16 @@
         <button
           disabled={page === 0}
           on:click={() => onPage(page - 1)}
-          class="text-xs px-3 py-1 rounded border border-surface-200 text-surface-600 disabled:opacity-30 hover:bg-surface-50"
+          class="text-xs px-3 py-1.5 rounded-lg border border-surface-200 text-surface-600 disabled:opacity-30 hover:bg-white hover:border-surface-300 transition-all"
         >
-          Previous
+          ← Prev
         </button>
         <button
           disabled={page + 1 >= totalPages}
           on:click={() => onPage(page + 1)}
-          class="text-xs px-3 py-1 rounded border border-surface-200 text-surface-600 disabled:opacity-30 hover:bg-surface-50"
+          class="text-xs px-3 py-1.5 rounded-lg border border-surface-200 text-surface-600 disabled:opacity-30 hover:bg-white hover:border-surface-300 transition-all"
         >
-          Next
+          Next →
         </button>
       </div>
     </div>

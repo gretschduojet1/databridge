@@ -21,21 +21,23 @@
         labels: data.map(d => d.label),
         datasets: [{
           data: data.map(d => d.value),
-          borderColor: '#0071e3',
-          backgroundColor: 'rgba(0, 113, 227, 0.06)',
-          borderWidth: 2,
-          pointRadius: 3,
-          pointBackgroundColor: '#0071e3',
+          borderColor: '#8b5cf6',
+          backgroundColor: 'rgba(139, 92, 246, 0.08)',
+          borderWidth: 2.5,
+          pointRadius: 4,
+          pointBackgroundColor: '#8b5cf6',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
           fill: true,
-          tension: 0.3,
+          tension: 0.4,
         }],
       },
       options: {
         responsive: true,
         plugins: { legend: { display: false } },
         scales: {
-          x: { grid: { display: false }, border: { display: false } },
-          y: { grid: { color: '#f5f5f7' }, border: { display: false } },
+          x: { grid: { display: false }, border: { display: false }, ticks: { color: '#94a3b8' } },
+          y: { grid: { color: '#f1f5f9' }, border: { display: false }, ticks: { color: '#94a3b8' } },
         },
       },
     })
@@ -44,9 +46,9 @@
   onDestroy(() => chart?.destroy())
 </script>
 
-<div class="bg-white rounded-mac border border-surface-100 shadow-sm p-5">
+<div class="bg-white rounded-2xl border border-surface-100 shadow-sm p-6">
   {#if title}
-    <p class="text-xs font-medium text-surface-400 uppercase tracking-wide mb-4">{title}</p>
+    <p class="text-sm font-semibold text-surface-700 mb-5">{title}</p>
   {/if}
   <canvas bind:this={canvas}></canvas>
 </div>
