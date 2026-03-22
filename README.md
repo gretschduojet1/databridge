@@ -146,12 +146,46 @@ docker compose exec db psql -U databridge -d databridge
 - Aggregation endpoints (sales totals, inventory summary, revenue over time) ✅
 - Alembic database migrations ✅
 
-**Phase 3 — Svelte UI**
-- Dashboard with table views
-- Charts and visualizations
-- Excel export
+**Phase 3 — Svelte UI** ✅
+- Split-panel login page with gradient branding ✅
+- Dark sidebar navigation with icons and active state highlighting ✅
+- Dashboard with color-coded stat cards and Chart.js visualizations ✅
+- Bar chart (revenue by region) and line chart (monthly revenue trend) ✅
+- Table views for customers, products, and orders ✅
+- Sorting, filtering (region, category, date range), and server-side pagination on all tables ✅
+- Excel export on every data view ✅
+- Badge components for regions, categories, and roles ✅
 
-**Phase 4 — Background Jobs**
-- Event dispatch system for async work (e.g. report generation, data sync)
-- Job queue with status tracking
-- Worker processes running independently of the API
+**Phase 4 — Search & Filtering**
+- Full-text search across customers, products, and orders
+- Search backend options under evaluation:
+  - **Postgres full-text search** (`tsvector`/`tsquery`) — zero new infrastructure, reasonable for this data volume
+  - **Meilisearch** — typo-tolerant, fast, easy to self-host as a fourth Docker service
+  - **Typesense** — similar to Meilisearch, more opinionated schema
+  - **Elasticsearch** — most powerful but heavy for this scale
+  - The repository pattern means the search implementation is swappable without touching routes
+- Enhanced report filters: date ranges, multi-select regions/categories, revenue thresholds
+- Saved filter presets per user
+
+**Phase 5 — Background Jobs**
+- Event dispatch system: API routes fire events, workers pick them up asynchronously
+- Job queue with Celery + Redis (or lightweight alternative like ARQ)
+- Initial use cases: scheduled report generation, simulated data sync from source systems, bulk exports
+- Job status tracking so the UI can poll for progress and show completion state
+- Webhook support for notifying external systems when jobs finish
+
+**Phase 6 — AWS Deployment (Free Tier)**
+- **RDS Postgres** (db.t3.micro) — replaces the local db container; free for 12 months
+- **ECS Fargate or EC2 t2.micro** — runs the backend and frontend containers
+- **Secrets Manager or Parameter Store** — replaces `.env`; secrets are never stored in files
+- **ALB + CloudFront** — load balancer in front of the API, CDN for the frontend static build
+- **VPC + security groups** — backend not publicly exposed, reachable only through the load balancer
+- **GitHub Actions CI/CD** — tests run on every PR, deploy to AWS on merge to main
+- Target cost: within AWS free tier for demo/interview workloads
+
+**Phase 7 — Observability & Polish**
+- Structured JSON logging with request IDs for traceability
+- Health check endpoint that validates live DB connectivity
+- Consistent error response schema across all endpoints
+- Responsive mobile layout
+- Dark mode

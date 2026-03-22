@@ -7,6 +7,7 @@ Create Date: 2026-03-22
 from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects.postgresql import ENUM as PGEnum
 
 revision: str = "001"
 down_revision: Union[str, None] = None
@@ -20,7 +21,12 @@ def upgrade() -> None:
     op.execute("CREATE SCHEMA IF NOT EXISTS inventory")
     op.execute("CREATE SCHEMA IF NOT EXISTS auth")
 
-    op.execute("CREATE TYPE auth.user_role AS ENUM ('admin', 'viewer')")
+    op.execute("""
+    DO $$ BEGIN
+        CREATE TYPE auth.user_role AS ENUM ('admin', 'viewer');
+    EXCEPTION WHEN duplicate_object THEN NULL;
+    END $$;
+    """)
 
     op.create_table(
         "customers",
@@ -60,7 +66,7 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), primary_key=True),
         sa.Column("email", sa.String(255), unique=True, nullable=False),
         sa.Column("hashed_password", sa.String(255), nullable=False),
-        sa.Column("role", sa.Enum("admin", "viewer", name="user_role", schema="auth"), nullable=False, server_default="viewer"),
+        sa.Column("role", PGEnum("admin", "viewer", name="user_role", schema="auth", create_type=False), nullable=False, server_default="viewer"),
         sa.Column("is_active", sa.Boolean(), nullable=False, server_default="true"),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         schema="auth",

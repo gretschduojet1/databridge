@@ -1,22 +1,22 @@
 <script>
-  import { isAuthenticated, logout } from './lib/auth'
+  import { isAuthenticated } from './lib/auth'
   import Login from './components/Login.svelte'
+  import Sidebar from './components/layout/Sidebar.svelte'
+  import Dashboard from './components/pages/Dashboard.svelte'
+  import Customers from './components/pages/Customers.svelte'
+  import Products from './components/pages/Products.svelte'
+  import Orders from './components/pages/Orders.svelte'
+
+  let currentPage = 'dashboard'
+
+  const pages = { dashboard: Dashboard, customers: Customers, products: Products, orders: Orders }
 </script>
 
 {#if $isAuthenticated}
-  <div class="min-h-screen bg-surface-50">
-    <header class="bg-white border-b border-surface-100 px-6 py-4 flex items-center justify-between">
-      <h1 class="text-base font-semibold text-surface-900">Databridge</h1>
-      <button
-        on:click={logout}
-        class="text-xs text-surface-400 hover:text-surface-600 transition-colors"
-      >
-        Sign out
-      </button>
-    </header>
-
-    <main class="p-6">
-      <p class="text-sm text-surface-500">Dashboard coming soon.</p>
+  <div class="flex min-h-screen bg-surface-50">
+    <Sidebar current={currentPage} onNavigate={p => currentPage = p} />
+    <main class="flex-1 overflow-auto">
+      <svelte:component this={pages[currentPage]} />
     </main>
   </div>
 {:else}

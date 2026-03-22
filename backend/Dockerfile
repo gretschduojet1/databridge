@@ -10,7 +10,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy source code after deps so code changes don't bust the pip cache layer
 COPY . .
 
-RUN chmod +x entrypoint.sh
-
 # Runs migrations then starts uvicorn
-CMD ["./entrypoint.sh"]
+CMD ["bash", "entrypoint.sh"]
