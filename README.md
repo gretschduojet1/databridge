@@ -147,9 +147,14 @@ docker compose exec db psql -U databridge -d databridge
 - Alembic database migrations ✅
 
 **Phase 3 — Svelte UI** ✅
-- Dashboard with stat cards and charts ✅
-- Table views with sorting, filtering, and server-side pagination ✅
+- Split-panel login page with gradient branding ✅
+- Dark sidebar navigation with icons and active state highlighting ✅
+- Dashboard with color-coded stat cards and Chart.js visualizations ✅
+- Bar chart (revenue by region) and line chart (monthly revenue trend) ✅
+- Table views for customers, products, and orders ✅
+- Sorting, filtering (region, category, date range), and server-side pagination on all tables ✅
 - Excel export on every data view ✅
+- Badge components for regions, categories, and roles ✅
 
 **Phase 4 — Search & Filtering**
 - Full-text search across customers, products, and orders
