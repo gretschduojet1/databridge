@@ -1,6 +1,6 @@
 <script>
   import { logout } from '../../lib/auth'
-  import { activeJobCount } from '../../lib/jobs'
+  import { jobCounts } from '../../lib/jobs'
 
   export let current = 'dashboard'
   export let onNavigate = () => {}
@@ -63,9 +63,18 @@
           <path stroke-linecap="round" stroke-linejoin="round" d={link.icon} />
         </svg>
         {link.label}
-        {#if link.key === 'jobs' && $activeJobCount > 0}
-          <span class="ml-auto text-xs font-semibold bg-amber-500/70 text-amber-50 rounded-full w-5 h-5 flex items-center justify-center">
-            {$activeJobCount}
+        {#if link.key === 'jobs'}
+          <span class="ml-auto flex items-center gap-1">
+            {#if $jobCounts.active > 0}
+              <span class="text-xs font-semibold bg-amber-500/70 text-amber-50 rounded-full w-5 h-5 flex items-center justify-center">
+                {$jobCounts.active}
+              </span>
+            {/if}
+            {#if $jobCounts.failed > 0}
+              <span class="text-xs font-semibold bg-rose-500/70 text-rose-50 rounded-full w-5 h-5 flex items-center justify-center">
+                !
+              </span>
+            {/if}
           </span>
         {/if}
       </button>

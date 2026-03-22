@@ -13,6 +13,7 @@
   export let onExport = null   // if provided, called instead of client-side export
 
   let exporting = false
+  let exportDone = false
 
   $: totalPages = Math.ceil(total / pageSize)
 
@@ -30,6 +31,8 @@
     exporting = true
     try {
       await onExport()
+      exportDone = true
+      setTimeout(() => exportDone = false, 3000)
     } finally {
       exporting = false
     }
@@ -44,12 +47,22 @@
     <button
       on:click={handleExport}
       disabled={!onExport || exporting}
-      class="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40"
+      class="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-all disabled:opacity-40
+        {exportDone
+          ? 'bg-emerald-50 text-emerald-600'
+          : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100 hover:text-indigo-700'}"
     >
-      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-      </svg>
-      {exporting ? 'Queuing…' : 'Export'}
+      {#if exportDone}
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+        </svg>
+        Queued — check your email
+      {:else}
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        </svg>
+        {exporting ? 'Queuing…' : 'Export'}
+      {/if}
     </button>
   </div>
 
