@@ -50,7 +50,10 @@ def export_resource(payload: dict) -> dict:
         ws.title = resource.capitalize()
         ws.append(cfg["columns"])
         for row in rows:
-            ws.append(list(row))
+            ws.append([
+                v.replace(tzinfo=None) if hasattr(v, 'tzinfo') and v.tzinfo else v
+                for v in row
+            ])
 
         buf = io.BytesIO()
         wb.save(buf)
