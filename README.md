@@ -146,12 +146,27 @@ docker compose exec db psql -U databridge -d databridge
 - Aggregation endpoints (sales totals, inventory summary, revenue over time) ✅
 - Alembic database migrations ✅
 
-**Phase 3 — Svelte UI**
-- Dashboard with table views
-- Charts and visualizations
-- Excel export
+**Phase 3 — Svelte UI** ✅
+- Dashboard with stat cards and charts ✅
+- Table views with sorting, filtering, and server-side pagination ✅
+- Excel export on every data view ✅
 
-**Phase 4 — Background Jobs**
+**Phase 4 — Search & Filtering**
+- Full-text search across customers, products, and orders
+- Evaluate a dedicated search service (Meilisearch, Typesense, or Elasticsearch) vs Postgres full-text search — the repository pattern makes swapping straightforward
+- Enhanced filters on reports: date ranges, multi-select regions/categories, revenue thresholds
+- Saved filter presets per user
+
+**Phase 5 — Background Jobs**
 - Event dispatch system for async work (e.g. report generation, data sync)
-- Job queue with status tracking
+- Job queue (Celery + Redis) with status tracking
 - Worker processes running independently of the API
+- UI progress indicators for long-running jobs
+
+**Phase 6 — AWS Deployment (Free Tier)**
+- Containerized deployment to AWS using free-tier services
+- RDS Postgres (db.t3.micro, free for 12 months) replaces the local db container
+- ECS Fargate or EC2 t2.micro for the backend and frontend containers
+- Secrets managed via AWS Secrets Manager or Parameter Store (replaces `.env`)
+- ALB or CloudFront in front of the frontend
+- GitHub Actions CI/CD pipeline: run tests on PR, deploy to AWS on merge to main
