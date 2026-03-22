@@ -73,7 +73,7 @@ jobs:
           path: code-coverage-results.md
 
   frontend:
-    name: Frontend — lint, type-check
+    name: Frontend — lint, type-check, test
     runs-on: ubuntu-latest
 
     steps:
@@ -94,3 +94,7 @@ jobs:
       - name: Type-check (svelte-check)
         working-directory: frontend
         run: npm run check
+
+      - name: Test (vitest + coverage)
+        working-directory: frontend
+        run: npm run test:coverage
