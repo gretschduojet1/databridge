@@ -1,9 +1,10 @@
-from sqlalchemy.orm import Session
 from sqlalchemy import func
-from models.order import Order
+from sqlalchemy.orm import Session
+
 from models.customer import Customer
+from models.order import Order
 from models.product import Product
-from schemas.reports import SalesByRegionRow, MonthlyRevenueRow, LowStockRow, SummaryRow
+from schemas.reports import LowStockRow, MonthlyRevenueRow, SalesByRegionRow, SummaryRow
 
 
 class PostgresReportsRepository:

@@ -1,6 +1,6 @@
 from writers.excel import ExcelWriter
-from writers.text import TextWriter
 from writers.interfaces.writer import WriterProtocol
+from writers.text import TextWriter
 
 _registry: dict[str, WriterProtocol] = {
     "xlsx": ExcelWriter(),

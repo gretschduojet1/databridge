@@ -1,11 +1,13 @@
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 from faker import Faker
+
 from core.celery_app import celery_app
 from core.database import SessionLocal
 from core.events import on
-from repositories.postgres.job import PostgresJobRepository
 from models.customer import Customer
+from repositories.postgres.job import PostgresJobRepository
 from schemas.enums import Region
 
 fake = Faker()
@@ -39,7 +41,7 @@ def simulate_customer_sync(payload: dict) -> dict:
                 name=fake.name(),
                 email=fake.unique.email(),
                 region=fake.random_element(regions).value,
-                created_at=datetime.now(timezone.utc),
+                created_at=datetime.now(UTC),
             )
             db.add(customer)
             inserted += 1

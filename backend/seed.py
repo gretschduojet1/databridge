@@ -6,15 +6,17 @@ Safe to re-run — clears existing data before inserting.
 """
 
 import random
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime
+
 from faker import Faker
 from sqlalchemy.orm import Session
+
 from core.database import SessionLocal
 from core.security import hash_password
-from models.user import User
 from models.customer import Customer
-from models.product import Product
 from models.order import Order
+from models.product import Product
+from models.user import User
 from schemas.enums import Role
 
 fake = Faker()
@@ -49,13 +51,13 @@ def seed(db: Session) -> None:
         email="admin@databridge.io",
         hashed_password=hash_password("admin"),
         role=Role.ADMIN,
-        created_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
     ))
     db.add(User(
         email="demo@databridge.io",
         hashed_password=hash_password("demo"),
         role=Role.VIEWER,
-        created_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
     ))
     db.commit()
 
@@ -66,7 +68,7 @@ def seed(db: Session) -> None:
             name=fake.name(),
             email=fake.unique.email(),
             region=random.choice(REGIONS),
-            created_at=fake.date_time_between(start_date="-2y", end_date="now", tzinfo=timezone.utc),
+            created_at=fake.date_time_between(start_date="-2y", end_date="now", tzinfo=UTC),
         )
         db.add(c)
         customers.append(c)
@@ -81,7 +83,7 @@ def seed(db: Session) -> None:
             category=category,
             stock_qty=random.randint(0, 500),
             reorder_level=random.choice([5, 10, 25, 50]),
-            updated_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(UTC),
         )
         db.add(p)
         products.append(p)
@@ -89,7 +91,7 @@ def seed(db: Session) -> None:
 
     print("Seeding orders...")
     for _ in range(500):
-        ordered_at = fake.date_time_between(start_date="-1y", end_date="now", tzinfo=timezone.utc)
+        ordered_at = fake.date_time_between(start_date="-1y", end_date="now", tzinfo=UTC)
         o = Order(
             customer_id=random.choice(customers).id,
             product_id=random.choice(products).id,

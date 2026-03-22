@@ -6,7 +6,7 @@ import or call a specific task function, it just says "this happened"
 and the handler registry decides what runs.
 """
 
-from typing import Callable
+from collections.abc import Callable
 
 _handlers: dict[str, list] = {}
 

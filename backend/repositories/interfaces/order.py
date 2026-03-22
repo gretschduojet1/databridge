@@ -1,12 +1,20 @@
-from typing import Protocol
 from datetime import datetime
+from typing import Protocol
+
 from models.order import Order
 from schemas.order import OrderCreate
 
 
 class OrderRepositoryProtocol(Protocol):
-    def get_all(self, skip: int = 0, limit: int = 25, customer_id: int | None = None, date_from: datetime | None = None, date_to: datetime | None = None, sort_by: str | None = None, sort_order: str = "asc") -> list[Order]: ...
-    def count(self, customer_id: int | None = None, date_from: datetime | None = None, date_to: datetime | None = None) -> int: ...
+    def get_all(
+        self, skip: int = 0, limit: int = 25, customer_id: int | None = None,
+        date_from: datetime | None = None, date_to: datetime | None = None,
+        sort_by: str | None = None, sort_order: str = "asc",
+    ) -> list[Order]: ...
+    def count(
+        self, customer_id: int | None = None,
+        date_from: datetime | None = None, date_to: datetime | None = None,
+    ) -> int: ...
     def get_by_id(self, id: int) -> Order | None: ...
     def create(self, data: OrderCreate) -> Order: ...
     def export_all(self) -> tuple[list[str], list]: ...

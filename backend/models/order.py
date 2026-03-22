@@ -1,6 +1,9 @@
 from datetime import datetime
-from sqlalchemy import Integer, Numeric, DateTime, ForeignKey
-from sqlalchemy.orm import mapped_column, Mapped, relationship
+from typing import ClassVar
+
+from sqlalchemy import DateTime, ForeignKey, Integer, Numeric
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from core.database import Base
 
 
@@ -13,7 +16,7 @@ class Order(Base):
     """
 
     __tablename__ = "orders"
-    __table_args__ = {"schema": "sales"}
+    __table_args__: ClassVar[dict] = {"schema": "sales"}
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     customer_id: Mapped[int] = mapped_column(

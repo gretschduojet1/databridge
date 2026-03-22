@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, DeclarativeBase
-from core.config import settings
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
+from core.config import settings
 
 # The engine manages the connection pool to Postgres.
 # pool_pre_ping=True checks if a connection is alive before using it —

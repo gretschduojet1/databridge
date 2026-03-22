@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from slowapi import Limiter
 from slowapi.util import get_remote_address
-from core.security import verify_password, create_access_token
+
 from core.container import get_user_repo
+from core.security import create_access_token, verify_password
 from repositories.interfaces.user import UserRepositoryProtocol
 from schemas.user import LoginRequest, TokenResponse
 

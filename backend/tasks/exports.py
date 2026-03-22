@@ -1,7 +1,7 @@
 from core.celery_app import celery_app
+from core.container import get_customer_repo, get_mailer, get_order_repo, get_product_repo
 from core.database import SessionLocal
 from core.events import on
-from core.container import get_customer_repo, get_product_repo, get_order_repo, get_mailer
 from repositories.postgres.job import PostgresJobRepository
 from writers.factory import get_writer
 

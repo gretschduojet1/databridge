@@ -21,18 +21,20 @@ jobs:
           cache-dependency-path: backend/requirements.txt
 
       - name: Install dependencies
-        run: pip install -r backend/requirements.txt
+        working-directory: backend
+        run: pip install -r requirements.txt
 
       - name: Lint (ruff)
-        run: ruff check backend/
+        working-directory: backend
+        run: python -m ruff check .
 
       - name: Type-check (mypy)
-        run: mypy backend/
-        env:
-          MYPYPATH: backend
+        working-directory: backend
+        run: python -m mypy .
 
       - name: Test (pytest)
-        run: pytest
+        working-directory: backend
+        run: python -m pytest
         env:
           SECRET_KEY: ci-test-secret-key-not-used-in-prod
           DATABASE_URL: sqlite:///./test.db

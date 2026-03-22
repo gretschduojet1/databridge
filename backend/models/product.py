@@ -1,6 +1,9 @@
 from datetime import datetime
-from sqlalchemy import Integer, String, DateTime
-from sqlalchemy.orm import mapped_column, Mapped
+from typing import ClassVar
+
+from sqlalchemy import DateTime, Integer, String
+from sqlalchemy.orm import Mapped, mapped_column
+
 from core.database import Base
 
 
@@ -8,7 +11,7 @@ class Product(Base):
     """Maps to the `inventory.products` table."""
 
     __tablename__ = "products"
-    __table_args__ = {"schema": "inventory"}
+    __table_args__: ClassVar[dict] = {"schema": "inventory"}
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     sku: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)

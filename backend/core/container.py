@@ -14,26 +14,26 @@ and this module decides which concrete class they get.
         return MongoCustomerRepository(db)
 """
 
-from sqlalchemy.orm import Session
 from fastapi import Depends
+from sqlalchemy.orm import Session
 
 from core.database import get_db
-from writers.interfaces.writer import WriterProtocol
-from writers.excel import ExcelWriter
 from mailers.interfaces.mailer import MailerProtocol
 from mailers.smtp import SmtpMailer
 from repositories.interfaces.customer import CustomerRepositoryProtocol
-from repositories.interfaces.product import ProductRepositoryProtocol
-from repositories.interfaces.order import OrderRepositoryProtocol
-from repositories.interfaces.reports import ReportsRepositoryProtocol
 from repositories.interfaces.job import JobRepositoryProtocol
+from repositories.interfaces.order import OrderRepositoryProtocol
+from repositories.interfaces.product import ProductRepositoryProtocol
+from repositories.interfaces.reports import ReportsRepositoryProtocol
 from repositories.interfaces.user import UserRepositoryProtocol
 from repositories.postgres.customer import PostgresCustomerRepository
-from repositories.postgres.product import PostgresProductRepository
-from repositories.postgres.order import PostgresOrderRepository
-from repositories.postgres.reports import PostgresReportsRepository
 from repositories.postgres.job import PostgresJobRepository
+from repositories.postgres.order import PostgresOrderRepository
+from repositories.postgres.product import PostgresProductRepository
+from repositories.postgres.reports import PostgresReportsRepository
 from repositories.postgres.user import PostgresUserRepository
+from writers.excel import ExcelWriter
+from writers.interfaces.writer import WriterProtocol
 
 
 def get_export_writer() -> WriterProtocol:

@@ -1,8 +1,11 @@
-from datetime import datetime, timezone
+from datetime import datetime
 from enum import Enum
-from sqlalchemy import String, DateTime, Text
+from typing import ClassVar
+
+from sqlalchemy import DateTime, String, Text
 from sqlalchemy.dialects.postgresql import JSON
-from sqlalchemy.orm import mapped_column, Mapped
+from sqlalchemy.orm import Mapped, mapped_column
+
 from core.database import Base
 
 
@@ -15,7 +18,7 @@ class JobStatus(str, Enum):
 
 class Job(Base):
     __tablename__ = "jobs"
-    __table_args__ = {"schema": "workers"}
+    __table_args__: ClassVar[dict] = {"schema": "workers"}
 
     id:         Mapped[str]          = mapped_column(String(36), primary_key=True)
     name:       Mapped[str]          = mapped_column(String(100), nullable=False)

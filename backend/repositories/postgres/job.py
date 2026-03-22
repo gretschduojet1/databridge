@@ -1,5 +1,7 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 from sqlalchemy.orm import Session
+
 from models.job import Job, JobStatus
 
 
@@ -8,7 +10,7 @@ class PostgresJobRepository:
         self.db = db
 
     def create(self, job_id: str, name: str, payload: dict) -> Job:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         job = Job(
             id=job_id,
             name=name,
@@ -44,6 +46,6 @@ class PostgresJobRepository:
         self._update(job_id, {"status": JobStatus.failed, "error": error})
 
     def _update(self, job_id: str, fields: dict) -> None:
-        fields["updated_at"] = datetime.now(timezone.utc)
+        fields["updated_at"] = datetime.now(UTC)
         self.db.query(Job).filter(Job.id == job_id).update(fields)
         self.db.commit()

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
-from core.dependencies import get_current_user
+
 from core.container import get_customer_repo
+from core.dependencies import get_current_user
 from models.user import User
 from repositories.interfaces.customer import CustomerRepositoryProtocol
 from schemas.customer import CustomerCreate, CustomerRead
@@ -28,7 +29,11 @@ def list_customers(
 
 
 @router.get("/{id}", response_model=CustomerRead)
-def get_customer(id: int, repo: CustomerRepositoryProtocol = Depends(get_customer_repo), _: User = Depends(get_current_user)):
+def get_customer(
+    id: int,
+    repo: CustomerRepositoryProtocol = Depends(get_customer_repo),
+    _: User = Depends(get_current_user),
+):
     customer = repo.get_by_id(id)
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
@@ -36,5 +41,9 @@ def get_customer(id: int, repo: CustomerRepositoryProtocol = Depends(get_custome
 
 
 @router.post("/", response_model=CustomerRead, status_code=201)
-def create_customer(body: CustomerCreate, repo: CustomerRepositoryProtocol = Depends(get_customer_repo), _: User = Depends(get_current_user)):
+def create_customer(
+    body: CustomerCreate,
+    repo: CustomerRepositoryProtocol = Depends(get_customer_repo),
+    _: User = Depends(get_current_user),
+):
     return repo.create(body)

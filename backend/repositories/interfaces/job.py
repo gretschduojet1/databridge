@@ -1,5 +1,6 @@
 from typing import Protocol
-from models.job import Job, JobStatus
+
+from models.job import Job
 
 
 class JobRepositoryProtocol(Protocol):

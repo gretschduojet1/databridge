@@ -1,15 +1,16 @@
 from logging.config import fileConfig
+
 from sqlalchemy import engine_from_config, pool
+
+# Import all models so Alembic can detect them for autogenerate
+import models.customer
+import models.job
+import models.order
+import models.product
+import models.user  # noqa: F401
 from alembic import context
 from core.config import settings
 from core.database import Base
-
-# Import all models so Alembic can detect them for autogenerate
-import models.customer  # noqa: F401
-import models.product   # noqa: F401
-import models.order     # noqa: F401
-import models.user      # noqa: F401
-import models.job       # noqa: F401
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.database_url)

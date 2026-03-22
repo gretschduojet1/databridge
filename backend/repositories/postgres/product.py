@@ -1,5 +1,6 @@
-from sqlalchemy.orm import Session
 from sqlalchemy import asc, desc
+from sqlalchemy.orm import Session
+
 from models.product import Product
 from schemas.product import ProductCreate
 
@@ -10,7 +11,10 @@ class PostgresProductRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_all(self, skip: int = 0, limit: int = 25, category: str | None = None, sort_by: str | None = None, sort_order: str = "asc") -> list[Product]:
+    def get_all(
+        self, skip: int = 0, limit: int = 25, category: str | None = None,
+        sort_by: str | None = None, sort_order: str = "asc",
+    ) -> list[Product]:
         q = self.db.query(Product)
         if category:
             q = q.filter(Product.category == category)
@@ -38,7 +42,10 @@ class PostgresProductRepository:
     def export_all(self) -> tuple[list[str], list]:
         columns = ["ID", "SKU", "Name", "Category", "Stock", "Reorder At", "Updated"]
         rows = (
-            self.db.query(Product.id, Product.sku, Product.name, Product.category, Product.stock_qty, Product.reorder_level, Product.updated_at)
+            self.db.query(
+                Product.id, Product.sku, Product.name, Product.category,
+                Product.stock_qty, Product.reorder_level, Product.updated_at,
+            )
             .order_by(Product.name)
             .all()
         )
