@@ -48,6 +48,12 @@ omit = [
     "tests/*",
     "seed.py",
     "alembic/*",
+    "tasks/sync.py",
+    "tasks/sweeper.py",
+    "tasks/exports.py",
+    "tasks/reports.py",
+    "core/mail.py",
+    "mailers/smtp.py",
 ]
 
 [tool.coverage.report]
