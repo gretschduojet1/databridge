@@ -1,12 +1,14 @@
 import uuid
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException  # noqa: F401
 from sqlalchemy.orm import Session
 from core.database import get_db
 from core.dependencies import get_current_user
 from core.events import dispatch
+from core.container import get_export_writer
 from models.user import User
 from repositories.postgres.job import PostgresJobRepository
 from schemas.job import JobOut, DispatchResponse
+from writers.interfaces.writer import WriterProtocol
 
 router = APIRouter()
 
@@ -33,13 +35,13 @@ def dispatch_export(
     resource: str,
     current_user: User = Depends(get_current_user),
     repo: PostgresJobRepository = Depends(get_repo),
+    writer: WriterProtocol = Depends(get_export_writer),
 ):
     """Enqueue a full dataset export. Result is emailed to the requesting user."""
     if resource not in ("customers", "products", "orders"):
-        from fastapi import HTTPException
         raise HTTPException(status_code=400, detail=f"Unknown resource: {resource}")
-    job_id = str(uuid.uuid4())
-    payload = {"resource": resource, "email": current_user.email}
+    job_id  = str(uuid.uuid4())
+    payload = {"resource": resource, "email": current_user.email, "format": writer.extension}
     job = repo.create(job_id, "export_resource", payload)
     dispatch("export.requested", {"job_id": job_id, **payload})
     return DispatchResponse(job_id=job.id, status=job.status)
