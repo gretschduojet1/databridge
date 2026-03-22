@@ -6,10 +6,11 @@
   import Customers from './components/pages/Customers.svelte'
   import Products from './components/pages/Products.svelte'
   import Orders from './components/pages/Orders.svelte'
+  import Jobs from './components/pages/Jobs.svelte'
 
   let currentPage = 'dashboard'
 
-  const pages = { dashboard: Dashboard, customers: Customers, products: Products, orders: Orders }
+  const pages = { dashboard: Dashboard, customers: Customers, products: Products, orders: Orders, jobs: Jobs }
 </script>
 
 {#if $isAuthenticated}
