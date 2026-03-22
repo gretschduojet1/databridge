@@ -1,9 +1,9 @@
-import io
 from core.celery_app import celery_app
 from core.database import SessionLocal
 from core.events import on
 from core.mail import send_email
 from repositories.postgres.job import PostgresJobRepository
+from writers.factory import get_writer
 from sqlalchemy import text
 
 
@@ -35,6 +35,7 @@ def export_resource(payload: dict) -> dict:
     job_id   = payload["job_id"]
     resource = payload["resource"]
     email_to = payload["email"]
+    fmt      = payload.get("format", "xlsx")
 
     db   = SessionLocal()
     repo = PostgresJobRepository(db)
@@ -42,29 +43,17 @@ def export_resource(payload: dict) -> dict:
     try:
         repo.set_running(job_id)
 
-        cfg  = QUERIES[resource]
-        rows = db.execute(text(cfg["sql"])).fetchall()
+        cfg    = QUERIES[resource]
+        rows   = db.execute(text(cfg["sql"])).fetchall()
+        writer = get_writer(fmt)
+        data   = writer.write(cfg["columns"], rows)
 
-        wb = openpyxl.Workbook()
-        ws = wb.active
-        ws.title = resource.capitalize()
-        ws.append(cfg["columns"])
-        for row in rows:
-            ws.append([
-                v.replace(tzinfo=None) if hasattr(v, 'tzinfo') and v.tzinfo else v
-                for v in row
-            ])
-
-        buf = io.BytesIO()
-        wb.save(buf)
-        excel_bytes = buf.getvalue()
-
-        filename = f"{resource}_export.xlsx"
+        filename = f"{resource}_export.{writer.extension}"
         send_email(
             to=email_to,
             subject=f"Databridge — {resource.capitalize()} Export",
             body=f"Your {resource} export is attached ({len(rows)} records).",
-            attachment=excel_bytes,
+            attachment=data,
             filename=filename,
         )
 
