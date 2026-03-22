@@ -1,12 +1,28 @@
-<script>
+<script lang="ts">
   import { onMount } from 'svelte'
   import { apiFetch } from '../../lib/api'
   import Table from '../ui/Table.svelte'
 
-  let rows = [], total = 0, loading = false
-  let page = 0, pageSize = 25
-  let sortBy = 'ordered_at', sortOrder = 'desc'
-  let dateFrom = '', dateTo = ''
+  interface OrderRow {
+    id: number
+    customer_id: number
+    product_id: number
+    quantity: number
+    unit_price: string
+    ordered_at: string
+  }
+
+  interface PagedResponse { items: OrderRow[]; total: number }
+
+  let rows: Record<string, unknown>[] = []
+  let total: number = 0
+  let loading: boolean = false
+  let page: number = 0
+  let pageSize: number = 25
+  let sortBy: string = 'ordered_at'
+  let sortOrder: 'asc' | 'desc' = 'desc'
+  let dateFrom: string = ''
+  let dateTo: string = ''
 
   const columns = [
     { key: 'id',          label: 'Order #',    sortable: false },
@@ -29,7 +45,7 @@
       ...(dateTo && { date_to: dateTo }),
     })
     const res = await apiFetch(`/orders/?${params}`)
-    const data = await res.json()
+    const data: PagedResponse = await res!.json()
     rows = data.items.map(r => ({
       ...r,
       unit_price: `$${parseFloat(r.unit_price).toFixed(2)}`,
@@ -42,8 +58,12 @@
 
   onMount(load)
 
-  function handleSort(key, order) { sortBy = key; sortOrder = order; page = 0; load() }
-  function handlePage(p) { page = p; load() }
+  function handleSort(key: string, order: 'asc' | 'desc'): void { sortBy = key; sortOrder = order; page = 0; load() }
+  function handlePage(p: number): void { page = p; load() }
+
+  async function handleExport() {
+    await apiFetch('/jobs/dispatch/export?resource=orders', { method: 'POST' })
+  }
 </script>
 
 <div class="p-8 flex flex-col gap-6">
@@ -69,8 +89,8 @@
 
   <Table
     {columns} {rows} {total} {page} {pageSize} {sortBy} {sortOrder} {loading}
-    exportName="orders"
     onSort={handleSort}
     onPage={handlePage}
+    onExport={handleExport}
   />
 </div>

@@ -1,18 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
-from core.database import get_db
 from core.dependencies import get_current_user
+from core.container import get_customer_repo
 from models.user import User
-from repositories.postgres.customer import PostgresCustomerRepository
 from repositories.interfaces.customer import CustomerRepositoryProtocol
 from schemas.customer import CustomerCreate, CustomerRead
 from schemas.pagination import Page
 
 router = APIRouter()
-
-
-def get_repo(db: Session = Depends(get_db)) -> CustomerRepositoryProtocol:
-    return PostgresCustomerRepository(db)
 
 
 @router.get("/", response_model=Page[CustomerRead])
@@ -22,7 +16,7 @@ def list_customers(
     region: str | None = None,
     sort_by: str | None = None,
     sort_order: str = "asc",
-    repo: CustomerRepositoryProtocol = Depends(get_repo),
+    repo: CustomerRepositoryProtocol = Depends(get_customer_repo),
     _: User = Depends(get_current_user),
 ):
     return Page(
@@ -34,7 +28,7 @@ def list_customers(
 
 
 @router.get("/{id}", response_model=CustomerRead)
-def get_customer(id: int, repo: CustomerRepositoryProtocol = Depends(get_repo), _: User = Depends(get_current_user)):
+def get_customer(id: int, repo: CustomerRepositoryProtocol = Depends(get_customer_repo), _: User = Depends(get_current_user)):
     customer = repo.get_by_id(id)
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
@@ -42,5 +36,5 @@ def get_customer(id: int, repo: CustomerRepositoryProtocol = Depends(get_repo), 
 
 
 @router.post("/", response_model=CustomerRead, status_code=201)
-def create_customer(body: CustomerCreate, repo: CustomerRepositoryProtocol = Depends(get_repo), _: User = Depends(get_current_user)):
+def create_customer(body: CustomerCreate, repo: CustomerRepositoryProtocol = Depends(get_customer_repo), _: User = Depends(get_current_user)):
     return repo.create(body)

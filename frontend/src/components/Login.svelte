@@ -1,10 +1,10 @@
-<script>
+<script lang="ts">
   import { token } from '../lib/auth'
 
-  let email = ''
-  let password = ''
-  let error = ''
-  let loading = false
+  let email: string = ''
+  let password: string = ''
+  let error: string = ''
+  let loading: boolean = false
 
   async function handleSubmit() {
     error = ''

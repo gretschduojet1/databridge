@@ -1,4 +1,5 @@
-<script>
+<script lang="ts">
+  import type { SvelteComponent } from 'svelte'
   import { isAuthenticated } from './lib/auth'
   import Login from './components/Login.svelte'
   import Sidebar from './components/layout/Sidebar.svelte'
@@ -6,10 +7,19 @@
   import Customers from './components/pages/Customers.svelte'
   import Products from './components/pages/Products.svelte'
   import Orders from './components/pages/Orders.svelte'
+  import Jobs from './components/pages/Jobs.svelte'
 
-  let currentPage = 'dashboard'
+  type PageKey = 'dashboard' | 'customers' | 'products' | 'orders' | 'jobs'
 
-  const pages = { dashboard: Dashboard, customers: Customers, products: Products, orders: Orders }
+  let currentPage: PageKey = 'dashboard'
+
+  const pages: Record<PageKey, typeof SvelteComponent> = {
+    dashboard: Dashboard,
+    customers: Customers,
+    products: Products,
+    orders: Orders,
+    jobs: Jobs,
+  }
 </script>
 
 {#if $isAuthenticated}

@@ -15,11 +15,22 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   backend:
     build: ./backend
     environment:
       DATABASE_URL: ${DATABASE_URL}
       SECRET_KEY: ${SECRET_KEY}
+      REDIS_URL: ${REDIS_URL}
     volumes:
       - ./backend:/app
     ports:
@@ -27,6 +38,57 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    build: ./backend
+    command: celery -A core.celery_app worker --loglevel=info
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      SECRET_KEY: ${SECRET_KEY}
+      REDIS_URL: ${REDIS_URL}
+    volumes:
+      - ./backend:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Web UI
+
+  beat:
+    build: ./backend
+    command: celery -A core.celery_app beat --loglevel=info
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      SECRET_KEY: ${SECRET_KEY}
+      REDIS_URL: ${REDIS_URL}
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - redis
+      - worker
+
+  flower:
+    build: ./backend
+    command: celery -A core.celery_app flower --port=5555
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      SECRET_KEY: ${SECRET_KEY}
+      REDIS_URL: ${REDIS_URL}
+    volumes:
+      - ./backend:/app
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+      - worker
 
   frontend:
     build: ./frontend

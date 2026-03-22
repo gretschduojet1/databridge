@@ -1,12 +1,14 @@
-<script>
+<script lang="ts">
   import { onMount, onDestroy } from 'svelte'
   import { Chart } from 'chart.js/auto'
 
-  export let data = []   // [{ label, value }]
-  export let title = ''
+  interface ChartPoint { label: string; value: number }
 
-  let canvas
-  let chart
+  export let data: ChartPoint[] = []
+  export let title: string = ''
+
+  let canvas: HTMLCanvasElement
+  let chart: Chart | undefined
 
   $: if (chart && data.length) {
     chart.data.labels = data.map(d => d.label)

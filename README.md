@@ -158,12 +158,17 @@ docker compose exec db psql -U databridge -d databridge
 - Excel export on every data view ✅
 - Badge components for regions, categories, and roles ✅
 
-**Phase 4 — Background Jobs**
-- Event dispatch system: API routes fire events, workers pick them up asynchronously
-- Job queue with Celery + Redis (or lightweight alternative like ARQ)
-- Initial use cases: scheduled report generation, simulated data sync from source systems, bulk exports
-- Job status tracking so the UI can poll for progress and show completion state
-- Webhook support for notifying external systems when jobs finish
+**Phase 4 — Background Jobs** ✅
+- Event dispatch system: API routes fire events, workers pick them up asynchronously ✅
+- Job queue with Celery + Redis ✅
+- Tasks: summary report generation, simulated customer sync from upstream CRM ✅
+- Job status tracking (pending → running → success/failed) with Postgres persistence ✅
+- Sweeper task: automatically re-enqueues stuck pending/running jobs every 60 seconds ✅
+- Dataset export to Excel: dispatched as a background job, result emailed via MailHog ✅
+- Writer abstraction (`WriterProtocol`) with Excel and text implementations, swappable in one place ✅
+- Service container (`core/container.py`): all interface→implementation bindings centralized; swapping the database layer requires changing one file ✅
+- Jobs page in the UI: dispatch panel, live status polling, result/error display, active/failed job counts in sidebar ✅
+- Flower monitoring dashboard at http://localhost:5555 ✅
 
 **Phase 5 — Search & Filtering**
 - Full-text search across customers, products, and orders
@@ -172,7 +177,18 @@ docker compose exec db psql -U databridge -d databridge
 - Enhanced report filters: date ranges, multi-select regions/categories, revenue thresholds
 - Saved filter presets per user
 
-**Phase 6 — AWS Deployment (Free Tier)**
+**Phase 6 — Developer Experience**
+- Committed Postman collection covering all endpoints with example requests and environment variables pre-configured
+- `.env.example` values wired into the Postman environment so auth and base URL work out of the box
+
+**Phase 7 — Observability & Polish**
+- Structured JSON logging with request IDs for traceability
+- Health check endpoint that validates live DB connectivity
+- Consistent error response schema across all endpoints
+- Responsive mobile layout
+- Dark mode
+
+**Phase 8 — AWS Deployment (Free Tier)**
 - **RDS Postgres** (db.t3.micro) — replaces the local db container; free for 12 months
 - **ECS Fargate or EC2 t2.micro** — runs the backend and frontend containers
 - **Secrets Manager or Parameter Store** — replaces `.env`; secrets are never stored in files
@@ -180,14 +196,3 @@ docker compose exec db psql -U databridge -d databridge
 - **VPC + security groups** — backend not publicly exposed, reachable only through the load balancer
 - **GitHub Actions CI/CD** — tests run on every PR, deploy to AWS on merge to main
 - Target cost: within AWS free tier for demo/interview workloads
-
-**Phase 7 — Developer Experience**
-- Committed Postman collection covering all endpoints with example requests and environment variables pre-configured
-- `.env.example` values wired into the Postman environment so auth and base URL work out of the box
-
-**Phase 8 — Observability & Polish**
-- Structured JSON logging with request IDs for traceability
-- Health check endpoint that validates live DB connectivity
-- Consistent error response schema across all endpoints
-- Responsive mobile layout
-- Dark mode

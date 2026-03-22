@@ -1,7 +1,7 @@
-<script>
-  export let value
+<script lang="ts">
+  export let value: string
 
-  const colors = {
+  const colors: Record<string, string> = {
     Northeast:   'bg-indigo-100 text-indigo-700',
     Southeast:   'bg-emerald-100 text-emerald-700',
     Midwest:     'bg-amber-100 text-amber-700',

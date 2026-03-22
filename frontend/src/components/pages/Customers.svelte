@@ -1,13 +1,27 @@
-<script>
+<script lang="ts">
   import { onMount } from 'svelte'
   import { apiFetch } from '../../lib/api'
   import Table from '../ui/Table.svelte'
   import Badge from '../ui/Badge.svelte'
 
-  let rows = [], total = 0, loading = false
-  let page = 0, pageSize = 25
-  let sortBy = 'name', sortOrder = 'asc'
-  let region = ''
+  interface CustomerRow {
+    id: number
+    name: string
+    email: string
+    region: string
+    created_at: string
+  }
+
+  interface PagedResponse { items: CustomerRow[]; total: number }
+
+  let rows: Record<string, unknown>[] = []
+  let total: number = 0
+  let loading: boolean = false
+  let page: number = 0
+  let pageSize: number = 25
+  let sortBy: string = 'name'
+  let sortOrder: 'asc' | 'desc' = 'asc'
+  let region: string = ''
 
   const columns = [
     { key: 'name',       label: 'Name',       sortable: true },
@@ -26,7 +40,7 @@
       ...(region && { region }),
     })
     const res = await apiFetch(`/customers/?${params}`)
-    const data = await res.json()
+    const data: PagedResponse = await res!.json()
     rows = data.items.map(r => ({
       ...r,
       created_at: new Date(r.created_at).toLocaleDateString(),
@@ -37,8 +51,12 @@
 
   onMount(load)
 
-  function handleSort(key, order) { sortBy = key; sortOrder = order; page = 0; load() }
-  function handlePage(p) { page = p; load() }
+  function handleSort(key: string, order: 'asc' | 'desc'): void { sortBy = key; sortOrder = order; page = 0; load() }
+  function handlePage(p: number): void { page = p; load() }
+
+  async function handleExport() {
+    await apiFetch('/jobs/dispatch/export?resource=customers', { method: 'POST' })
+  }
 </script>
 
 <div class="p-8 flex flex-col gap-6">
@@ -62,8 +80,8 @@
 
   <Table
     {columns} {rows} {total} {page} {pageSize} {sortBy} {sortOrder} {loading}
-    exportName="customers"
     onSort={handleSort}
     onPage={handlePage}
+    onExport={handleExport}
   />
 </div>

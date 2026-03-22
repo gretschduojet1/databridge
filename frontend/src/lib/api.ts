@@ -3,8 +3,11 @@ import { token, logout } from './auth'
 
 const BASE_URL = 'http://localhost:8000'
 
-export async function apiFetch(path, options = {}) {
-  const headers = { 'Content-Type': 'application/json', ...options.headers }
+export async function apiFetch(path: string, options: RequestInit = {}): Promise<Response | undefined> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options.headers as Record<string, string>),
+  }
 
   const currentToken = get(token)
   if (currentToken) {
@@ -16,7 +19,7 @@ export async function apiFetch(path, options = {}) {
   // Token expired or invalid — force logout
   if (res.status === 401) {
     logout()
-    return
+    return undefined
   }
 
   return res

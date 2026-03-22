@@ -9,6 +9,7 @@ import models.customer  # noqa: F401
 import models.product   # noqa: F401
 import models.order     # noqa: F401
 import models.user      # noqa: F401
+import models.job       # noqa: F401
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.database_url)
@@ -46,7 +47,7 @@ def run_migrations_online() -> None:
             include_schemas=True,
             # Tells autogenerate to look inside our custom schemas, not just public
             include_object=lambda obj, name, type_, reflected, compare_to: (
-                getattr(obj, "schema", None) in (None, "customers", "sales", "inventory", "auth")
+                getattr(obj, "schema", None) in (None, "customers", "sales", "inventory", "auth", "workers")
                 if type_ == "table" else True
             ),
         )
