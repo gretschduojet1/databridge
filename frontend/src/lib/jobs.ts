@@ -1,12 +1,22 @@
 import { readable } from 'svelte/store'
+import type { Readable } from 'svelte/store'
 import { apiFetch } from './api'
 
-export const jobCounts = readable({ active: 0, failed: 0 }, (set) => {
-  async function poll() {
+interface JobCounts {
+  active: number
+  failed: number
+}
+
+interface Job {
+  status: string
+}
+
+export const jobCounts: Readable<JobCounts> = readable({ active: 0, failed: 0 }, (set) => {
+  async function poll(): Promise<void> {
     try {
       const res = await apiFetch('/jobs/')
-      if (!res.ok) return
-      const jobs = await res.json()
+      if (!res || !res.ok) return
+      const jobs: Job[] = await res.json()
       set({
         active: jobs.filter(j => j.status === 'pending' || j.status === 'running').length,
         failed: jobs.filter(j => j.status === 'failed').length,

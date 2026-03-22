@@ -1,10 +1,11 @@
 import { writable, derived } from 'svelte/store'
+import type { Writable, Readable } from 'svelte/store'
 
 // Persist the token across page refreshes
 const storedToken = localStorage.getItem('token')
 
-export const token = writable(storedToken)
-export const isAuthenticated = derived(token, $token => !!$token)
+export const token: Writable<string | null> = writable(storedToken)
+export const isAuthenticated: Readable<boolean> = derived(token, $token => !!$token)
 
 token.subscribe(value => {
   if (value) {
@@ -14,6 +15,6 @@ token.subscribe(value => {
   }
 })
 
-export function logout() {
+export function logout(): void {
   token.set(null)
 }

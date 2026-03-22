@@ -1,19 +1,28 @@
-<script>
-  export let columns = []
-  export let rows = []
-  export let total = 0
-  export let page = 0
-  export let pageSize = 25
-  export let sortBy = null
-  export let sortOrder = 'asc'
-  export let loading = false
+<script lang="ts">
+  import type { SvelteComponent } from 'svelte'
 
-  export let onSort   = () => {}
-  export let onPage   = () => {}
-  export let onExport = null   // if provided, called instead of client-side export
+  interface Column {
+    key: string
+    label: string
+    sortable?: boolean
+    render?: typeof SvelteComponent
+  }
 
-  let exporting = false
-  let exportDone = false
+  export let columns: Column[] = []
+  export let rows: Record<string, unknown>[] = []
+  export let total: number = 0
+  export let page: number = 0
+  export let pageSize: number = 25
+  export let sortBy: string | null = null
+  export let sortOrder: 'asc' | 'desc' = 'asc'
+  export let loading: boolean = false
+
+  export let onSort: (key: string, order: 'asc' | 'desc') => void = () => {}
+  export let onPage: (page: number) => void = () => {}
+  export let onExport: (() => Promise<void>) | null = null
+
+  let exporting: boolean = false
+  let exportDone: boolean = false
 
   $: totalPages = Math.ceil(total / pageSize)
 

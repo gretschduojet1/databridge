@@ -1,11 +1,14 @@
-<script>
-  export let label
-  export let value
-  export let sub = null
-  export let color = 'indigo'
-  export let icon = null
+<script lang="ts">
+  type ColorKey = 'indigo' | 'violet' | 'teal' | 'rose' | 'amber'
+  interface PaletteEntry { wrap: string; icon: string }
 
-  const palette = {
+  export let label: string
+  export let value: string | number
+  export let sub: string | null = null
+  export let color: ColorKey = 'indigo'
+  export let icon: string | null = null
+
+  const palette: Record<ColorKey, PaletteEntry> = {
     indigo: { wrap: 'bg-indigo-50',  icon: 'text-indigo-500' },
     violet: { wrap: 'bg-violet-50',  icon: 'text-violet-500' },
     teal:   { wrap: 'bg-teal-50',    icon: 'text-teal-500'   },

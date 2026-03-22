@@ -1,11 +1,14 @@
-<script>
+<script lang="ts">
   import { logout } from '../../lib/auth'
   import { jobCounts } from '../../lib/jobs'
 
-  export let current = 'dashboard'
-  export let onNavigate = () => {}
+  type PageKey = 'dashboard' | 'customers' | 'products' | 'orders' | 'jobs'
+  interface NavLink { key: PageKey; label: string; icon: string }
 
-  const links = [
+  export let current: PageKey = 'dashboard'
+  export let onNavigate: (page: PageKey) => void = () => {}
+
+  const links: NavLink[] = [
     {
       key: 'dashboard',
       label: 'Dashboard',

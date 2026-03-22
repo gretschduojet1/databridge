@@ -1,25 +1,38 @@
-<script>
+<script lang="ts">
   import { onMount, onDestroy } from 'svelte'
   import { apiFetch } from '../../lib/api'
 
-  let jobs = []
-  let loading = false
-  let dispatching = null
-  let pollInterval = null
+  type JobStatus = 'pending' | 'running' | 'success' | 'failed'
+  type DispatchType = 'report'
 
-  const statusStyles = {
+  interface Job {
+    id: string
+    name: string
+    status: JobStatus
+    created_at: string
+    updated_at: string
+    result: Record<string, unknown> | null
+    error: string | null
+  }
+
+  let jobs: Job[] = []
+  let loading: boolean = false
+  let dispatching: DispatchType | null = null
+  let pollInterval: ReturnType<typeof setInterval> | null = null
+
+  const statusStyles: Record<JobStatus, string> = {
     pending: 'bg-amber-100 text-amber-700',
     running: 'bg-indigo-100 text-indigo-700',
     success: 'bg-emerald-100 text-emerald-700',
     failed:  'bg-rose-100 text-rose-700',
   }
 
-  async function load() {
+  async function load(): Promise<void> {
     const res = await apiFetch('/jobs/')
-    jobs = await res.json()
+    jobs = await res!.json()
   }
 
-  async function dispatch(type) {
+  async function dispatch(type: DispatchType): Promise<void> {
     dispatching = type
     try {
       await apiFetch(`/jobs/dispatch/${type}`, { method: 'POST' })
@@ -30,7 +43,7 @@
     }
   }
 
-  function startPolling() {
+  function startPolling(): void {
     if (pollInterval) return
     pollInterval = setInterval(async () => {
       await load()
@@ -39,12 +52,12 @@
     }, 2000)
   }
 
-  function stopPolling() {
+  function stopPolling(): void {
     clearInterval(pollInterval)
     pollInterval = null
   }
 
-  function fmt(iso) {
+  function fmt(iso: string): string {
     return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
   }
 
