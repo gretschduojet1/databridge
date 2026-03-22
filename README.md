@@ -158,12 +158,13 @@ docker compose exec db psql -U databridge -d databridge
 - Excel export on every data view ✅
 - Badge components for regions, categories, and roles ✅
 
-**Phase 4 — Background Jobs**
-- Event dispatch system: API routes fire events, workers pick them up asynchronously
-- Job queue with Celery + Redis (or lightweight alternative like ARQ)
-- Initial use cases: scheduled report generation, simulated data sync from source systems, bulk exports
-- Job status tracking so the UI can poll for progress and show completion state
-- Webhook support for notifying external systems when jobs finish
+**Phase 4 — Background Jobs** ✅
+- Event dispatch system: API routes fire events, workers pick them up asynchronously ✅
+- Job queue with Celery + Redis ✅
+- Tasks: summary report generation, simulated customer sync from upstream CRM ✅
+- Job status tracking (pending → running → success/failed) with Postgres persistence ✅
+- Jobs page in the UI: dispatch panel, live status polling, result display ✅
+- Flower monitoring dashboard at http://localhost:5555 ✅
 
 **Phase 5 — Search & Filtering**
 - Full-text search across customers, products, and orders
