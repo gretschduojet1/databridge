@@ -1,6 +1,6 @@
 [tool.ruff]
-src = ["backend"]
-line-length = 100
+src = ["."]
+line-length = 120
 target-version = "py311"
 
 [tool.ruff.lint]
@@ -20,12 +20,12 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"backend/seed.py" = ["S311"]   # random is fine for seed data
-"backend/tests/*" = ["S101"]   # asserts are expected in tests
+"seed.py" = ["S311"]   # random is fine for seed data
+"tests/*" = ["S101"]   # asserts are expected in tests
 
 [tool.mypy]
 python_version = "3.11"
-mypy_path = "backend"
+plugins = ["pydantic.mypy"]
 explicit_package_bases = true
 ignore_missing_imports = true
 strict = false
@@ -39,5 +39,26 @@ module = ["celery.*", "passlib.*", "jose.*", "slowapi.*", "faker.*", "openpyxl.*
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
-testpaths = ["backend/tests"]
-pythonpath = ["backend"]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.coverage.run]
+source = ["."]
+omit = [
+    "tests/*",
+    "seed.py",
+    "alembic/*",
+    "tasks/sync.py",
+    "tasks/sweeper.py",
+    "tasks/exports.py",
+    "tasks/reports.py",
+    "core/mail.py",
+    "mailers/smtp.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "^\\.\\.\\.\\s*$",
+]

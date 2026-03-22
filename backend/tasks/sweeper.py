@@ -1,4 +1,5 @@
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
+
 from core.celery_app import celery_app
 from core.database import SessionLocal
 from models.job import Job, JobStatus
@@ -9,14 +10,14 @@ STALE_RUNNING_MINUTES = 5
 
 
 @celery_app.task
-def sweep_stuck_jobs():
+def sweep_stuck_jobs() -> dict[str, int]:
     """
     Finds jobs that never made it into the queue (pending) or whose worker
     died before finishing (running but stale), and re-enqueues them.
     """
     # Import here to avoid circular imports at module load time
-    from tasks.reports import generate_summary_report
     from tasks.exports import export_resource
+    from tasks.reports import generate_summary_report
 
     task_map = {
         "generate_summary_report": generate_summary_report,
@@ -27,7 +28,7 @@ def sweep_stuck_jobs():
     repo = PostgresJobRepository(db)
 
     try:
-        stale_cutoff = datetime.now(timezone.utc) - timedelta(minutes=STALE_RUNNING_MINUTES)
+        stale_cutoff = datetime.now(UTC) - timedelta(minutes=STALE_RUNNING_MINUTES)
 
         stuck = (
             db.query(Job)
@@ -47,7 +48,7 @@ def sweep_stuck_jobs():
             if not task:
                 continue
             repo._update(job.id, {"status": JobStatus.pending})
-            task.delay({"job_id": job.id, **(job.payload or {})})
+            task.delay({"job_id": job.id, **(job.payload or {})})  # type: ignore[attr-defined]
             requeued += 1
 
         return {"requeued": requeued}

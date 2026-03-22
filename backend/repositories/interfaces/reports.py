@@ -1,5 +1,6 @@
 from typing import Protocol
-from schemas.reports import SalesByRegionRow, MonthlyRevenueRow, LowStockRow, SummaryRow
+
+from schemas.reports import LowStockRow, MonthlyRevenueRow, SalesByRegionRow, SummaryRow
 
 
 class ReportsRepositoryProtocol(Protocol):

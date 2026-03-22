@@ -1,10 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
-from core.dependencies import get_current_user
+
 from core.container import get_product_repo
+from core.dependencies import get_current_user
+from models.product import Product
 from models.user import User
 from repositories.interfaces.product import ProductRepositoryProtocol
-from schemas.product import ProductCreate, ProductRead
 from schemas.pagination import Page
+from schemas.product import ProductCreate, ProductRead
 
 router = APIRouter()
 
@@ -18,7 +20,7 @@ def list_products(
     sort_order: str = "asc",
     repo: ProductRepositoryProtocol = Depends(get_product_repo),
     _: User = Depends(get_current_user),
-):
+) -> Page[ProductRead]:
     return Page(
         items=repo.get_all(skip=skip, limit=limit, category=category, sort_by=sort_by, sort_order=sort_order),
         total=repo.count(category=category),
@@ -28,7 +30,11 @@ def list_products(
 
 
 @router.get("/{id}", response_model=ProductRead)
-def get_product(id: int, repo: ProductRepositoryProtocol = Depends(get_product_repo), _: User = Depends(get_current_user)):
+def get_product(
+    id: int,
+    repo: ProductRepositoryProtocol = Depends(get_product_repo),
+    _: User = Depends(get_current_user),
+) -> Product:
     product = repo.get_by_id(id)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
@@ -36,5 +42,9 @@ def get_product(id: int, repo: ProductRepositoryProtocol = Depends(get_product_r
 
 
 @router.post("/", response_model=ProductRead, status_code=201)
-def create_product(body: ProductCreate, repo: ProductRepositoryProtocol = Depends(get_product_repo), _: User = Depends(get_current_user)):
+def create_product(
+    body: ProductCreate,
+    repo: ProductRepositoryProtocol = Depends(get_product_repo),
+    _: User = Depends(get_current_user),
+) -> Product:
     return repo.create(body)

@@ -133,42 +133,42 @@ docker compose exec db psql -U databridge -d databridge
 
 ## Roadmap
 
-**Phase 1 — Docker + Database + Seed Data** ✅
-- Three-service Docker stack (db, backend, frontend) ✅
-- Postgres schema with three simulated source systems ✅
-- FastAPI with repository pattern, Pydantic DTOs, Protocol interfaces ✅
-- Seed script generating realistic sample data ✅
-- Test infrastructure with pytest ✅
+**Phase 1 — Docker + Database + Seed Data** ✅ COMPLETED
+- Three-service Docker stack (db, backend, frontend)
+- Postgres schema with three simulated source systems
+- FastAPI with repository pattern, Pydantic DTOs, Protocol interfaces
+- Seed script generating realistic sample data
+- Test infrastructure with pytest
 
-**Phase 2 — Auth + API Completion** ✅
-- JWT authentication with role-based access ✅
-- Rate limiting on login ✅
-- Svelte login page with protected app shell ✅
-- Sorting, filtering, and pagination on all list endpoints ✅
-- Aggregation endpoints (sales totals, inventory summary, revenue over time) ✅
-- Alembic database migrations ✅
+**Phase 2 — Auth + API Completion** ✅ COMPLETED
+- JWT authentication with role-based access
+- Rate limiting on login
+- Svelte login page with protected app shell
+- Sorting, filtering, and pagination on all list endpoints
+- Aggregation endpoints (sales totals, inventory summary, revenue over time)
+- Alembic database migrations
 
-**Phase 3 — Svelte UI** ✅
-- Split-panel login page with gradient branding ✅
-- Dark sidebar navigation with icons and active state highlighting ✅
-- Dashboard with color-coded stat cards and Chart.js visualizations ✅
-- Bar chart (revenue by region) and line chart (monthly revenue trend) ✅
-- Table views for customers, products, and orders ✅
-- Sorting, filtering (region, category, date range), and server-side pagination on all tables ✅
-- Excel export on every data view ✅
-- Badge components for regions, categories, and roles ✅
+**Phase 3 — Svelte UI** ✅ COMPLETED
+- Split-panel login page with gradient branding
+- Dark sidebar navigation with icons and active state highlighting
+- Dashboard with color-coded stat cards and Chart.js visualizations
+- Bar chart (revenue by region) and line chart (monthly revenue trend)
+- Table views for customers, products, and orders
+- Sorting, filtering (region, category, date range), and server-side pagination on all tables
+- Excel export on every data view
+- Badge components for regions, categories, and roles
 
-**Phase 4 — Background Jobs** ✅
-- Event dispatch system: API routes fire events, workers pick them up asynchronously ✅
-- Job queue with Celery + Redis ✅
-- Tasks: summary report generation, simulated customer sync from upstream CRM ✅
-- Job status tracking (pending → running → success/failed) with Postgres persistence ✅
-- Sweeper task: automatically re-enqueues stuck pending/running jobs every 60 seconds ✅
-- Dataset export to Excel: dispatched as a background job, result emailed via MailHog ✅
-- Writer abstraction (`WriterProtocol`) with Excel and text implementations, swappable in one place ✅
-- Service container (`core/container.py`): all interface→implementation bindings centralized; swapping the database layer requires changing one file ✅
-- Jobs page in the UI: dispatch panel, live status polling, result/error display, active/failed job counts in sidebar ✅
-- Flower monitoring dashboard at http://localhost:5555 ✅
+**Phase 4 — Background Jobs** ✅ COMPLETED
+- Event dispatch system: API routes fire events, workers pick them up asynchronously
+- Job queue with Celery + Redis
+- Tasks: summary report generation, simulated customer sync from upstream CRM
+- Job status tracking (pending → running → success/failed) with Postgres persistence
+- Sweeper task: automatically re-enqueues stuck pending/running jobs every 60 seconds
+- Dataset export to Excel: dispatched as a background job, result emailed via MailHog
+- Writer abstraction (`WriterProtocol`) with Excel and text implementations, swappable in one place
+- Service container (`core/container.py`): all interface→implementation bindings centralized; swapping the database layer requires changing one file
+- Jobs page in the UI: dispatch panel, live status polling, result/error display, active/failed job counts in sidebar
+- Flower monitoring dashboard at http://localhost:5555
 
 **Phase 5 — Search & Filtering**
 - Full-text search across customers, products, and orders

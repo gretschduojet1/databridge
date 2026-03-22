@@ -1,11 +1,19 @@
+from collections.abc import Callable
+
+from sqlalchemy.orm import Session
+
 from core.celery_app import celery_app
+from core.container import get_customer_repo, get_mailer, get_order_repo, get_product_repo
 from core.database import SessionLocal
 from core.events import on
-from core.container import get_customer_repo, get_product_repo, get_order_repo, get_mailer
+from repositories.interfaces.customer import CustomerRepositoryProtocol
+from repositories.interfaces.order import OrderRepositoryProtocol
+from repositories.interfaces.product import ProductRepositoryProtocol
 from repositories.postgres.job import PostgresJobRepository
 from writers.factory import get_writer
 
-_REPO_FACTORY = {
+_ExportRepo = CustomerRepositoryProtocol | ProductRepositoryProtocol | OrderRepositoryProtocol
+_REPO_FACTORY: dict[str, Callable[[Session], _ExportRepo]] = {
     "customers": get_customer_repo,
     "products":  get_product_repo,
     "orders":    get_order_repo,

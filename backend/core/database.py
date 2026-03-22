@@ -1,7 +1,9 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, DeclarativeBase
-from core.config import settings
+from collections.abc import Generator
 
+from sqlalchemy import create_engine
+from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
+
+from core.config import settings
 
 # The engine manages the connection pool to Postgres.
 # pool_pre_ping=True checks if a connection is alive before using it —
@@ -22,7 +24,7 @@ class Base(DeclarativeBase):
     pass
 
 
-def get_db():
+def get_db() -> Generator[Session, None, None]:
     """
     FastAPI dependency that provides a DB session scoped to one HTTP request.
 

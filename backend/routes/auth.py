@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from slowapi import Limiter
 from slowapi.util import get_remote_address
-from core.security import verify_password, create_access_token
+
 from core.container import get_user_repo
+from core.security import create_access_token, verify_password
 from repositories.interfaces.user import UserRepositoryProtocol
 from schemas.user import LoginRequest, TokenResponse
 
@@ -12,7 +13,7 @@ limiter = Limiter(key_func=get_remote_address)
 
 @router.post("/login", response_model=TokenResponse)
 @limiter.limit("5/minute")
-def login(request: Request, body: LoginRequest, repo: UserRepositoryProtocol = Depends(get_user_repo)):
+def login(request: Request, body: LoginRequest, repo: UserRepositoryProtocol = Depends(get_user_repo)) -> TokenResponse:
     user = repo.get_by_email(body.email)
 
     # Deliberately vague error — don't reveal whether the email exists

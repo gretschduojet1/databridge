@@ -1,15 +1,15 @@
 <script lang="ts">
-  import type { SvelteComponent } from 'svelte'
+  import type { ComponentType } from 'svelte'
 
   interface Column {
     key: string
     label: string
     sortable?: boolean
-    render?: typeof SvelteComponent
+    render?: ComponentType
   }
 
   export let columns: Column[] = []
-  export let rows: Record<string, unknown>[] = []
+  export let rows: Record<string, any>[] = []
   export let total: number = 0
   export let page: number = 0
   export let pageSize: number = 25
@@ -26,7 +26,7 @@
 
   $: totalPages = Math.ceil(total / pageSize)
 
-  function handleSort(col) {
+  function handleSort(col: Column) {
     if (!col.sortable) return
     if (sortBy === col.key) {
       onSort(col.key, sortOrder === 'asc' ? 'desc' : 'asc')

@@ -1,6 +1,8 @@
 from datetime import datetime
-from sqlalchemy.orm import Session
+
 from sqlalchemy import asc, desc
+from sqlalchemy.orm import Session
+
 from models.order import Order
 from schemas.order import OrderCreate
 
@@ -11,7 +13,11 @@ class PostgresOrderRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_all(self, skip: int = 0, limit: int = 25, customer_id: int | None = None, date_from: datetime | None = None, date_to: datetime | None = None, sort_by: str | None = None, sort_order: str = "asc") -> list[Order]:
+    def get_all(
+        self, skip: int = 0, limit: int = 25, customer_id: int | None = None,
+        date_from: datetime | None = None, date_to: datetime | None = None,
+        sort_by: str | None = None, sort_order: str = "asc",
+    ) -> list[Order]:
         q = self.db.query(Order)
         if customer_id:
             q = q.filter(Order.customer_id == customer_id)
@@ -24,7 +30,10 @@ class PostgresOrderRepository:
             q = q.order_by(asc(col) if sort_order == "asc" else desc(col))
         return q.offset(skip).limit(limit).all()
 
-    def count(self, customer_id: int | None = None, date_from: datetime | None = None, date_to: datetime | None = None) -> int:
+    def count(
+        self, customer_id: int | None = None,
+        date_from: datetime | None = None, date_to: datetime | None = None,
+    ) -> int:
         q = self.db.query(Order)
         if customer_id:
             q = q.filter(Order.customer_id == customer_id)

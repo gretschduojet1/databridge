@@ -1,5 +1,6 @@
-from sqlalchemy.orm import Session
 from sqlalchemy import asc, desc
+from sqlalchemy.orm import Session
+
 from models.customer import Customer
 from schemas.customer import CustomerCreate
 
@@ -10,7 +11,10 @@ class PostgresCustomerRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_all(self, skip: int = 0, limit: int = 25, region: str | None = None, sort_by: str | None = None, sort_order: str = "asc") -> list[Customer]:
+    def get_all(
+        self, skip: int = 0, limit: int = 25, region: str | None = None,
+        sort_by: str | None = None, sort_order: str = "asc",
+    ) -> list[Customer]:
         q = self.db.query(Customer)
         if region:
             q = q.filter(Customer.region == region)

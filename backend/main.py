@@ -1,13 +1,14 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
+
+import tasks.exports
+import tasks.reports
+import tasks.sweeper  # noqa: F401
 from core.middleware import SecurityHeadersMiddleware
-from routes import customers, products, orders, auth, reports, jobs
-import tasks.reports   # noqa: F401 — registers event handlers
-import tasks.exports   # noqa: F401
-import tasks.sweeper   # noqa: F401
+from routes import auth, customers, jobs, orders, products, reports
 
 limiter = Limiter(key_func=get_remote_address)
 
@@ -18,7 +19,7 @@ app = FastAPI(
 )
 
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore[arg-type]
 
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(
@@ -37,5 +38,5 @@ app.include_router(jobs.router, prefix="/jobs", tags=["jobs"])
 
 
 @app.get("/health", tags=["meta"])
-def health():
+def health() -> dict[str, str]:
     return {"status": "ok"}

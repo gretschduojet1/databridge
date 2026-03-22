@@ -33,8 +33,8 @@
   async function load() {
     loading = true
     const params = new URLSearchParams({
-      skip: page * pageSize,
-      limit: pageSize,
+      skip: String(page * pageSize),
+      limit: String(pageSize),
       sort_by: sortBy,
       sort_order: sortOrder,
       ...(region && { region }),
