@@ -1,5 +1,6 @@
 <script>
   import { logout } from '../../lib/auth'
+  import { activeJobCount } from '../../lib/jobs'
 
   export let current = 'dashboard'
   export let onNavigate = () => {}
@@ -62,6 +63,11 @@
           <path stroke-linecap="round" stroke-linejoin="round" d={link.icon} />
         </svg>
         {link.label}
+        {#if link.key === 'jobs' && $activeJobCount > 0}
+          <span class="ml-auto text-xs font-semibold bg-indigo-400 text-white rounded-full w-5 h-5 flex items-center justify-center">
+            {$activeJobCount}
+          </span>
+        {/if}
       </button>
     {/each}
   </nav>
