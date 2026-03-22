@@ -1,18 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
-from core.database import get_db
 from core.dependencies import get_current_user
+from core.container import get_product_repo
 from models.user import User
-from repositories.postgres.product import PostgresProductRepository
 from repositories.interfaces.product import ProductRepositoryProtocol
 from schemas.product import ProductCreate, ProductRead
 from schemas.pagination import Page
 
 router = APIRouter()
-
-
-def get_repo(db: Session = Depends(get_db)) -> ProductRepositoryProtocol:
-    return PostgresProductRepository(db)
 
 
 @router.get("/", response_model=Page[ProductRead])
@@ -22,7 +16,7 @@ def list_products(
     category: str | None = None,
     sort_by: str | None = None,
     sort_order: str = "asc",
-    repo: ProductRepositoryProtocol = Depends(get_repo),
+    repo: ProductRepositoryProtocol = Depends(get_product_repo),
     _: User = Depends(get_current_user),
 ):
     return Page(
@@ -34,7 +28,7 @@ def list_products(
 
 
 @router.get("/{id}", response_model=ProductRead)
-def get_product(id: int, repo: ProductRepositoryProtocol = Depends(get_repo), _: User = Depends(get_current_user)):
+def get_product(id: int, repo: ProductRepositoryProtocol = Depends(get_product_repo), _: User = Depends(get_current_user)):
     product = repo.get_by_id(id)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
@@ -42,5 +36,5 @@ def get_product(id: int, repo: ProductRepositoryProtocol = Depends(get_repo), _:
 
 
 @router.post("/", response_model=ProductRead, status_code=201)
-def create_product(body: ProductCreate, repo: ProductRepositoryProtocol = Depends(get_repo), _: User = Depends(get_current_user)):
+def create_product(body: ProductCreate, repo: ProductRepositoryProtocol = Depends(get_product_repo), _: User = Depends(get_current_user)):
     return repo.create(body)

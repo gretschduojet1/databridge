@@ -1,26 +1,20 @@
 import uuid
 from fastapi import APIRouter, Depends, HTTPException  # noqa: F401
-from sqlalchemy.orm import Session
-from core.database import get_db
 from core.dependencies import get_current_user
 from core.events import dispatch
-from core.container import get_export_writer
+from core.container import get_export_writer, get_job_repo
 from models.user import User
-from repositories.postgres.job import PostgresJobRepository
+from repositories.interfaces.job import JobRepositoryProtocol
 from schemas.job import JobOut, DispatchResponse
 from writers.interfaces.writer import WriterProtocol
 
 router = APIRouter()
 
 
-def get_repo(db: Session = Depends(get_db)) -> PostgresJobRepository:
-    return PostgresJobRepository(db)
-
-
 @router.post("/dispatch/report", response_model=DispatchResponse)
 def dispatch_report(
     _: User = Depends(get_current_user),
-    repo: PostgresJobRepository = Depends(get_repo),
+    repo: JobRepositoryProtocol = Depends(get_job_repo),
 ):
     """Enqueue a full summary report regeneration."""
     job_id = str(uuid.uuid4())
@@ -29,12 +23,11 @@ def dispatch_report(
     return DispatchResponse(job_id=job.id, status=job.status)
 
 
-
 @router.post("/dispatch/export", response_model=DispatchResponse)
 def dispatch_export(
     resource: str,
     current_user: User = Depends(get_current_user),
-    repo: PostgresJobRepository = Depends(get_repo),
+    repo: JobRepositoryProtocol = Depends(get_job_repo),
     writer: WriterProtocol = Depends(get_export_writer),
 ):
     """Enqueue a full dataset export. Result is emailed to the requesting user."""
@@ -51,7 +44,7 @@ def dispatch_export(
 def get_job(
     job_id: str,
     _: User = Depends(get_current_user),
-    repo: PostgresJobRepository = Depends(get_repo),
+    repo: JobRepositoryProtocol = Depends(get_job_repo),
 ):
     """Poll job status. Returns current state including result or error once complete."""
     job = repo.get(job_id)
@@ -65,6 +58,6 @@ def list_jobs(
     skip: int = 0,
     limit: int = 25,
     _: User = Depends(get_current_user),
-    repo: PostgresJobRepository = Depends(get_repo),
+    repo: JobRepositoryProtocol = Depends(get_job_repo),
 ):
     return repo.list(skip=skip, limit=limit)

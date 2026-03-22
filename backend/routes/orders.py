@@ -1,19 +1,13 @@
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
-from core.database import get_db
 from core.dependencies import get_current_user
+from core.container import get_order_repo
 from models.user import User
-from repositories.postgres.order import PostgresOrderRepository
 from repositories.interfaces.order import OrderRepositoryProtocol
 from schemas.order import OrderCreate, OrderRead
 from schemas.pagination import Page
 
 router = APIRouter()
-
-
-def get_repo(db: Session = Depends(get_db)) -> OrderRepositoryProtocol:
-    return PostgresOrderRepository(db)
 
 
 @router.get("/", response_model=Page[OrderRead])
@@ -25,7 +19,7 @@ def list_orders(
     date_to: datetime | None = None,
     sort_by: str | None = None,
     sort_order: str = "asc",
-    repo: OrderRepositoryProtocol = Depends(get_repo),
+    repo: OrderRepositoryProtocol = Depends(get_order_repo),
     _: User = Depends(get_current_user),
 ):
     return Page(
@@ -37,7 +31,7 @@ def list_orders(
 
 
 @router.get("/{id}", response_model=OrderRead)
-def get_order(id: int, repo: OrderRepositoryProtocol = Depends(get_repo), _: User = Depends(get_current_user)):
+def get_order(id: int, repo: OrderRepositoryProtocol = Depends(get_order_repo), _: User = Depends(get_current_user)):
     order = repo.get_by_id(id)
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
@@ -45,5 +39,5 @@ def get_order(id: int, repo: OrderRepositoryProtocol = Depends(get_repo), _: Use
 
 
 @router.post("/", response_model=OrderRead, status_code=201)
-def create_order(body: OrderCreate, repo: OrderRepositoryProtocol = Depends(get_repo), _: User = Depends(get_current_user)):
+def create_order(body: OrderCreate, repo: OrderRepositoryProtocol = Depends(get_order_repo), _: User = Depends(get_current_user)):
     return repo.create(body)

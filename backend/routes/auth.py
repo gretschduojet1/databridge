@@ -1,10 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from sqlalchemy.orm import Session
 from slowapi import Limiter
 from slowapi.util import get_remote_address
-from core.database import get_db
 from core.security import verify_password, create_access_token
-from repositories.postgres.user import PostgresUserRepository
+from core.container import get_user_repo
+from repositories.interfaces.user import UserRepositoryProtocol
 from schemas.user import LoginRequest, TokenResponse
 
 router = APIRouter()
@@ -13,8 +12,7 @@ limiter = Limiter(key_func=get_remote_address)
 
 @router.post("/login", response_model=TokenResponse)
 @limiter.limit("5/minute")
-def login(request: Request, body: LoginRequest, db: Session = Depends(get_db)):
-    repo = PostgresUserRepository(db)
+def login(request: Request, body: LoginRequest, repo: UserRepositoryProtocol = Depends(get_user_repo)):
     user = repo.get_by_email(body.email)
 
     # Deliberately vague error — don't reveal whether the email exists
