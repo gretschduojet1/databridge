@@ -41,3 +41,18 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+
+[tool.coverage.run]
+source = ["."]
+omit = [
+    "tests/*",
+    "seed.py",
+    "alembic/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "^\\.\\.\\.\\s*$",
+]
