@@ -10,7 +10,9 @@ router = APIRouter()
 
 
 @router.get("/sales/by-region", response_model=list[SalesByRegionRow])
-def sales_by_region(repo: ReportsRepositoryProtocol = Depends(get_reports_repo), _: User = Depends(get_current_user)):
+def sales_by_region(
+    repo: ReportsRepositoryProtocol = Depends(get_reports_repo), _: User = Depends(get_current_user)
+) -> list[SalesByRegionRow]:
     return repo.sales_by_region()
 
 
@@ -19,15 +21,19 @@ def sales_monthly(
     year: int | None = None,
     repo: ReportsRepositoryProtocol = Depends(get_reports_repo),
     _: User = Depends(get_current_user),
-):
+) -> list[MonthlyRevenueRow]:
     return repo.monthly_revenue(year=year)
 
 
 @router.get("/inventory/low-stock", response_model=list[LowStockRow])
-def low_stock(repo: ReportsRepositoryProtocol = Depends(get_reports_repo), _: User = Depends(get_current_user)):
+def low_stock(
+    repo: ReportsRepositoryProtocol = Depends(get_reports_repo), _: User = Depends(get_current_user)
+) -> list[LowStockRow]:
     return repo.low_stock()
 
 
 @router.get("/summary", response_model=SummaryRow)
-def summary(repo: ReportsRepositoryProtocol = Depends(get_reports_repo), _: User = Depends(get_current_user)):
+def summary(
+    repo: ReportsRepositoryProtocol = Depends(get_reports_repo), _: User = Depends(get_current_user)
+) -> SummaryRow:
     return repo.summary()

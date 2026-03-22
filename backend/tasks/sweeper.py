@@ -10,7 +10,7 @@ STALE_RUNNING_MINUTES = 5
 
 
 @celery_app.task
-def sweep_stuck_jobs():
+def sweep_stuck_jobs() -> dict[str, int]:
     """
     Finds jobs that never made it into the queue (pending) or whose worker
     died before finishing (running but stale), and re-enqueues them.
@@ -48,7 +48,7 @@ def sweep_stuck_jobs():
             if not task:
                 continue
             repo._update(job.id, {"status": JobStatus.pending})
-            task.delay({"job_id": job.id, **(job.payload or {})})
+            task.delay({"job_id": job.id, **(job.payload or {})})  # type: ignore[attr-defined]
             requeued += 1
 
         return {"requeued": requeued}

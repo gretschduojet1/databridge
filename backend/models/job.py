@@ -18,7 +18,7 @@ class JobStatus(str, Enum):
 
 class Job(Base):
     __tablename__ = "jobs"
-    __table_args__: ClassVar[dict] = {"schema": "workers"}
+    __table_args__: ClassVar[dict] = {"schema": "workers"}  # type: ignore[misc]
 
     id:         Mapped[str]          = mapped_column(String(36), primary_key=True)
     name:       Mapped[str]          = mapped_column(String(100), nullable=False)

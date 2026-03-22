@@ -1,10 +1,16 @@
-from datetime import datetime
-from typing import ClassVar
+from __future__ import annotations
+
+from datetime import UTC, datetime
+from typing import TYPE_CHECKING, ClassVar
 
 from sqlalchemy import DateTime, ForeignKey, Integer, Numeric
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from core.database import Base
+
+if TYPE_CHECKING:
+    from models.customer import Customer
+    from models.product import Product
 
 
 class Order(Base):
@@ -16,7 +22,7 @@ class Order(Base):
     """
 
     __tablename__ = "orders"
-    __table_args__: ClassVar[dict] = {"schema": "sales"}
+    __table_args__: ClassVar[dict] = {"schema": "sales"}  # type: ignore[misc]
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     customer_id: Mapped[int] = mapped_column(
@@ -27,9 +33,9 @@ class Order(Base):
     )
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
     unit_price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
-    ordered_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    ordered_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
     # SQLAlchemy relationships let you traverse associations in Python:
     # order.customer.name, order.product.sku — no manual joins needed
-    customer: Mapped["Customer"] = relationship("Customer")  # noqa: F821
-    product: Mapped["Product"] = relationship("Product")  # noqa: F821
+    customer: Mapped[Customer] = relationship("Customer")
+    product: Mapped[Product] = relationship("Product")

@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from core.container import get_product_repo
 from core.dependencies import get_current_user
+from models.product import Product
 from models.user import User
 from repositories.interfaces.product import ProductRepositoryProtocol
 from schemas.pagination import Page
@@ -19,7 +20,7 @@ def list_products(
     sort_order: str = "asc",
     repo: ProductRepositoryProtocol = Depends(get_product_repo),
     _: User = Depends(get_current_user),
-):
+) -> Page[ProductRead]:
     return Page(
         items=repo.get_all(skip=skip, limit=limit, category=category, sort_by=sort_by, sort_order=sort_order),
         total=repo.count(category=category),
@@ -33,7 +34,7 @@ def get_product(
     id: int,
     repo: ProductRepositoryProtocol = Depends(get_product_repo),
     _: User = Depends(get_current_user),
-):
+) -> Product:
     product = repo.get_by_id(id)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
@@ -45,5 +46,5 @@ def create_product(
     body: ProductCreate,
     repo: ProductRepositoryProtocol = Depends(get_product_repo),
     _: User = Depends(get_current_user),
-):
+) -> Product:
     return repo.create(body)

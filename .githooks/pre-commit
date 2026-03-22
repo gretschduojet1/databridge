@@ -1,0 +1,19 @@
+#!/bin/bash
+set -e
+
+echo "→ ruff"
+docker compose exec -T backend python -m ruff check .
+
+echo "→ mypy"
+docker compose exec -T backend python -m mypy .
+
+echo "→ pytest"
+docker compose exec -T backend python -m pytest tests/ -q
+
+echo "→ eslint"
+docker compose exec -T frontend npm run lint
+
+echo "→ svelte-check"
+docker compose exec -T frontend npm run check
+
+echo "✓ All checks passed"

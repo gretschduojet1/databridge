@@ -13,7 +13,7 @@ limiter = Limiter(key_func=get_remote_address)
 
 @router.post("/login", response_model=TokenResponse)
 @limiter.limit("5/minute")
-def login(request: Request, body: LoginRequest, repo: UserRepositoryProtocol = Depends(get_user_repo)):
+def login(request: Request, body: LoginRequest, repo: UserRepositoryProtocol = Depends(get_user_repo)) -> TokenResponse:
     user = repo.get_by_email(body.email)
 
     # Deliberately vague error — don't reveal whether the email exists

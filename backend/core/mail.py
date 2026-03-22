@@ -4,7 +4,7 @@ from email.message import EmailMessage
 from core.config import settings
 
 
-def send_email(to: str, subject: str, body: str, attachment: bytes | None = None, filename: str | None = None):
+def send_email(to: str, subject: str, body: str, attachment: bytes | None = None, filename: str | None = None) -> None:
     msg = EmailMessage()
     msg["From"]    = settings.mail_from
     msg["To"]      = to

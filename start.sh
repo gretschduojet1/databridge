@@ -19,4 +19,6 @@ else
   done < .env.example
 fi
 
+git config core.hooksPath .githooks
+
 docker compose up --build "$@"

@@ -18,8 +18,8 @@ def get_current_user(
 ) -> User:
     try:
         payload = decode_access_token(token)
-        email: str = payload.get("sub")
-        if not email:
+        email = payload.get("sub")
+        if not isinstance(email, str) or not email:
             raise ValueError
     except (JWTError, ValueError):
         raise HTTPException(

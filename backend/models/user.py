@@ -11,7 +11,7 @@ from schemas.enums import Role
 
 class User(Base):
     __tablename__ = "users"
-    __table_args__: ClassVar[dict] = {"schema": "auth"}
+    __table_args__: ClassVar[dict] = {"schema": "auth"}  # type: ignore[misc]
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)

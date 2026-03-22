@@ -19,7 +19,7 @@ app = FastAPI(
 )
 
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore[arg-type]
 
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(
@@ -38,5 +38,5 @@ app.include_router(jobs.router, prefix="/jobs", tags=["jobs"])
 
 
 @app.get("/health", tags=["meta"])
-def health():
+def health() -> dict[str, str]:
     return {"status": "ok"}
