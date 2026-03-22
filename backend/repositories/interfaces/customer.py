@@ -1,0 +1,9 @@
+from typing import Protocol
+from models.customer import Customer
+from schemas.customer import CustomerCreate
+
+
+class CustomerRepositoryProtocol(Protocol):
+    def get_all(self, skip: int = 0, limit: int = 100, region: str | None = None) -> list[Customer]: ...
+    def get_by_id(self, id: int) -> Customer | None: ...
+    def create(self, data: CustomerCreate) -> Customer: ...

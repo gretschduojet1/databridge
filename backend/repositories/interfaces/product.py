@@ -1,0 +1,9 @@
+from typing import Protocol
+from models.product import Product
+from schemas.product import ProductCreate
+
+
+class ProductRepositoryProtocol(Protocol):
+    def get_all(self, skip: int = 0, limit: int = 100, category: str | None = None) -> list[Product]: ...
+    def get_by_id(self, id: int) -> Product | None: ...
+    def create(self, data: ProductCreate) -> Product: ...

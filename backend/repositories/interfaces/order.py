@@ -1,0 +1,9 @@
+from typing import Protocol
+from models.order import Order
+from schemas.order import OrderCreate
+
+
+class OrderRepositoryProtocol(Protocol):
+    def get_all(self, skip: int = 0, limit: int = 100, customer_id: int | None = None) -> list[Order]: ...
+    def get_by_id(self, id: int) -> Order | None: ...
+    def create(self, data: OrderCreate) -> Order: ...
