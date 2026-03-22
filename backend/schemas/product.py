@@ -1,11 +1,12 @@
 from datetime import datetime
 from pydantic import BaseModel
+from schemas.enums import Category
 
 
 class ProductBase(BaseModel):
     sku: str
     name: str
-    category: str
+    category: Category
     stock_qty: int
     reorder_level: int
 

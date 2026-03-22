@@ -1,11 +1,12 @@
 from datetime import datetime
 from pydantic import BaseModel, EmailStr
+from schemas.enums import Region
 
 
 class CustomerBase(BaseModel):
     name: str
     email: EmailStr
-    region: str
+    region: Region
 
 
 class CustomerCreate(CustomerBase):
