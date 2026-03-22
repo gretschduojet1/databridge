@@ -59,6 +59,22 @@ ALTER TABLE sales.orders
     FOREIGN KEY (product_id) REFERENCES inventory.products(id);
 
 -- -----------------------------------------------------------------------------
+-- Source System 4: Auth / Identity
+-- -----------------------------------------------------------------------------
+CREATE SCHEMA IF NOT EXISTS auth;
+
+CREATE TYPE auth.user_role AS ENUM ('admin', 'viewer');
+
+CREATE TABLE auth.users (
+    id            SERIAL PRIMARY KEY,
+    email         VARCHAR(255) UNIQUE NOT NULL,
+    hashed_password VARCHAR(255)      NOT NULL,
+    role          auth.user_role      NOT NULL DEFAULT 'viewer',
+    is_active     BOOLEAN             NOT NULL DEFAULT TRUE,
+    created_at    TIMESTAMPTZ         NOT NULL DEFAULT NOW()
+);
+
+-- -----------------------------------------------------------------------------
 -- Indexes for common query patterns (filtering by region, date range, category)
 -- -----------------------------------------------------------------------------
 CREATE INDEX idx_customers_region   ON customers.customers(region);
