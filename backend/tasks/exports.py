@@ -1,37 +1,20 @@
 from core.celery_app import celery_app
 from core.database import SessionLocal
 from core.events import on
-from core.mail import send_email
+from core.container import get_customer_repo, get_product_repo, get_order_repo, get_mailer
 from repositories.postgres.job import PostgresJobRepository
 from writers.factory import get_writer
-from sqlalchemy import text
 
-
-QUERIES = {
-    "customers": {
-        "sql": "SELECT id, name, email, region, created_at FROM customers.customers ORDER BY name",
-        "columns": ["ID", "Name", "Email", "Region", "Joined"],
-    },
-    "products": {
-        "sql": "SELECT id, sku, name, category, stock_qty, reorder_level, updated_at FROM inventory.products ORDER BY name",
-        "columns": ["ID", "SKU", "Name", "Category", "Stock", "Reorder At", "Updated"],
-    },
-    "orders": {
-        "sql": """
-            SELECT id, customer_id, product_id, quantity, unit_price,
-                   (quantity * unit_price) AS total, ordered_at
-            FROM sales.orders ORDER BY ordered_at DESC
-        """,
-        "columns": ["ID", "Customer", "Product", "Qty", "Unit Price", "Total", "Date"],
-    },
+_REPO_FACTORY = {
+    "customers": get_customer_repo,
+    "products":  get_product_repo,
+    "orders":    get_order_repo,
 }
 
 
 @on("export.requested")
 @celery_app.task
 def export_resource(payload: dict) -> dict:
-    import openpyxl
-
     job_id   = payload["job_id"]
     resource = payload["resource"]
     email_to = payload["email"]
@@ -43,18 +26,19 @@ def export_resource(payload: dict) -> dict:
     try:
         repo.set_running(job_id)
 
-        cfg    = QUERIES[resource]
-        rows   = db.execute(text(cfg["sql"])).fetchall()
-        writer = get_writer(fmt)
-        data   = writer.write(cfg["columns"], rows)
+        resource_repo      = _REPO_FACTORY[resource](db)
+        columns, rows      = resource_repo.export_all()
+        writer             = get_writer(fmt)
+        data               = writer.write(columns, rows)
 
         filename = f"{resource}_export.{writer.extension}"
-        send_email(
+        get_mailer().send(
             to=email_to,
             subject=f"Databridge — {resource.capitalize()} Export",
             body=f"Your {resource} export is attached ({len(rows)} records).",
             attachment=data,
             filename=filename,
+            content_type=writer.content_type,
         )
 
         result = {"resource": resource, "rows": len(rows), "emailed_to": email_to}

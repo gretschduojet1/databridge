@@ -34,3 +34,12 @@ class PostgresCustomerRepository:
         self.db.commit()
         self.db.refresh(customer)
         return customer
+
+    def export_all(self) -> tuple[list[str], list]:
+        columns = ["ID", "Name", "Email", "Region", "Joined"]
+        rows = (
+            self.db.query(Customer.id, Customer.name, Customer.email, Customer.region, Customer.created_at)
+            .order_by(Customer.name)
+            .all()
+        )
+        return columns, rows

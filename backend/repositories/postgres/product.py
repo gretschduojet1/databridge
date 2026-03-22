@@ -34,3 +34,12 @@ class PostgresProductRepository:
         self.db.commit()
         self.db.refresh(product)
         return product
+
+    def export_all(self) -> tuple[list[str], list]:
+        columns = ["ID", "SKU", "Name", "Category", "Stock", "Reorder At", "Updated"]
+        rows = (
+            self.db.query(Product.id, Product.sku, Product.name, Product.category, Product.stock_qty, Product.reorder_level, Product.updated_at)
+            .order_by(Product.name)
+            .all()
+        )
+        return columns, rows

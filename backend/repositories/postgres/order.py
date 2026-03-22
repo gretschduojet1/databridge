@@ -43,3 +43,17 @@ class PostgresOrderRepository:
         self.db.commit()
         self.db.refresh(order)
         return order
+
+    def export_all(self) -> tuple[list[str], list]:
+        columns = ["ID", "Customer", "Product", "Qty", "Unit Price", "Total", "Date"]
+        rows = (
+            self.db.query(
+                Order.id, Order.customer_id, Order.product_id,
+                Order.quantity, Order.unit_price,
+                (Order.quantity * Order.unit_price).label("total"),
+                Order.ordered_at,
+            )
+            .order_by(Order.ordered_at.desc())
+            .all()
+        )
+        return columns, rows

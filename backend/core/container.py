@@ -20,6 +20,8 @@ from fastapi import Depends
 from core.database import get_db
 from writers.interfaces.writer import WriterProtocol
 from writers.excel import ExcelWriter
+from mailers.interfaces.mailer import MailerProtocol
+from mailers.smtp import SmtpMailer
 from repositories.interfaces.customer import CustomerRepositoryProtocol
 from repositories.interfaces.product import ProductRepositoryProtocol
 from repositories.interfaces.order import OrderRepositoryProtocol
@@ -36,6 +38,10 @@ from repositories.postgres.user import PostgresUserRepository
 
 def get_export_writer() -> WriterProtocol:
     return ExcelWriter()
+
+
+def get_mailer() -> MailerProtocol:
+    return SmtpMailer()
 
 
 def get_customer_repo(db: Session = Depends(get_db)) -> CustomerRepositoryProtocol:
