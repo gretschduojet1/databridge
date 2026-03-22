@@ -11,8 +11,8 @@ from schemas.enums import Region
 fake = Faker()
 
 
-@celery_app.task
 @on("sync.customers")
+@celery_app.task
 def simulate_customer_sync(payload: dict) -> dict:
     """
     Simulates pulling a batch of new customers from an upstream CRM.

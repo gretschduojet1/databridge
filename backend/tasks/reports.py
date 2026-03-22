@@ -5,8 +5,8 @@ from core.events import on
 from repositories.postgres.job import PostgresJobRepository
 
 
-@celery_app.task
 @on("report.generate")
+@celery_app.task
 def generate_summary_report(payload: dict) -> dict:
     job_id = payload["job_id"]
 
