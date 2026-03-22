@@ -163,7 +163,11 @@ docker compose exec db psql -U databridge -d databridge
 - Job queue with Celery + Redis ✅
 - Tasks: summary report generation, simulated customer sync from upstream CRM ✅
 - Job status tracking (pending → running → success/failed) with Postgres persistence ✅
-- Jobs page in the UI: dispatch panel, live status polling, result display ✅
+- Sweeper task: automatically re-enqueues stuck pending/running jobs every 60 seconds ✅
+- Dataset export to Excel: dispatched as a background job, result emailed via MailHog ✅
+- Writer abstraction (`WriterProtocol`) with Excel and text implementations, swappable in one place ✅
+- Service container (`core/container.py`): all interface→implementation bindings centralized; swapping the database layer requires changing one file ✅
+- Jobs page in the UI: dispatch panel, live status polling, result/error display, active/failed job counts in sidebar ✅
 - Flower monitoring dashboard at http://localhost:5555 ✅
 
 **Phase 5 — Search & Filtering**
