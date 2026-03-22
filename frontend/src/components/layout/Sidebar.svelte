@@ -72,7 +72,7 @@
             {/if}
             {#if $jobCounts.failed > 0}
               <span class="text-xs font-semibold bg-rose-500/70 text-rose-50 rounded-full w-5 h-5 flex items-center justify-center">
-                !
+                {$jobCounts.failed}
               </span>
             {/if}
           </span>
