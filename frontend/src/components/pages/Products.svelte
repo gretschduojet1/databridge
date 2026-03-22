@@ -35,15 +35,15 @@
   async function load() {
     loading = true
     const params = new URLSearchParams({
-      skip: page * pageSize,
-      limit: pageSize,
+      skip: String(page * pageSize),
+      limit: String(pageSize),
       sort_by: sortBy,
       sort_order: sortOrder,
       ...(category && { category }),
     })
     const res = await apiFetch(`/products/?${params}`)
     const data: PagedResponse = await res!.json()
-    rows = data.items
+    rows = data.items as unknown as Record<string, any>[]
     total = data.total
     loading = false
   }

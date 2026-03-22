@@ -53,7 +53,7 @@
   }
 
   function stopPolling(): void {
-    clearInterval(pollInterval)
+    clearInterval(pollInterval ?? undefined)
     pollInterval = null
   }
 

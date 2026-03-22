@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { SvelteComponent } from 'svelte'
+  import type { ComponentType } from 'svelte'
   import { isAuthenticated } from './lib/auth'
   import Login from './components/Login.svelte'
   import Sidebar from './components/layout/Sidebar.svelte'
@@ -13,7 +13,7 @@
 
   let currentPage: PageKey = 'dashboard'
 
-  const pages: Record<PageKey, typeof SvelteComponent> = {
+  const pages: Record<PageKey, ComponentType> = {
     dashboard: Dashboard,
     customers: Customers,
     products: Products,
