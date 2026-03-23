@@ -144,3 +144,8 @@ docker compose exec db psql -U databridge -d databridge
 - Dashboard with table views
 - Charts and visualizations
 - Excel export
+
+**Phase 4 — Background Jobs**
+- Event dispatch system for async work (e.g. report generation, data sync)
+- Job queue with status tracking
+- Worker processes running independently of the API
