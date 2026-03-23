@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from core.database import get_db
 from core.dependencies import get_current_user
@@ -6,6 +6,7 @@ from models.user import User
 from repositories.postgres.customer import PostgresCustomerRepository
 from repositories.interfaces.customer import CustomerRepositoryProtocol
 from schemas.customer import CustomerCreate, CustomerRead
+from schemas.pagination import Page
 
 router = APIRouter()
 
@@ -14,15 +15,22 @@ def get_repo(db: Session = Depends(get_db)) -> CustomerRepositoryProtocol:
     return PostgresCustomerRepository(db)
 
 
-@router.get("/", response_model=list[CustomerRead])
+@router.get("/", response_model=Page[CustomerRead])
 def list_customers(
     skip: int = 0,
-    limit: int = 100,
+    limit: int = Query(default=25, le=200),
     region: str | None = None,
+    sort_by: str | None = None,
+    sort_order: str = "asc",
     repo: CustomerRepositoryProtocol = Depends(get_repo),
     _: User = Depends(get_current_user),
 ):
-    return repo.get_all(skip=skip, limit=limit, region=region)
+    return Page(
+        items=repo.get_all(skip=skip, limit=limit, region=region, sort_by=sort_by, sort_order=sort_order),
+        total=repo.count(region=region),
+        skip=skip,
+        limit=limit,
+    )
 
 
 @router.get("/{id}", response_model=CustomerRead)

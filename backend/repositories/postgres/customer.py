@@ -1,17 +1,29 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import asc, desc
 from models.customer import Customer
 from schemas.customer import CustomerCreate
+
+SORTABLE_FIELDS = {"name", "email", "region", "created_at"}
 
 
 class PostgresCustomerRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_all(self, skip: int = 0, limit: int = 100, region: str | None = None) -> list[Customer]:
+    def get_all(self, skip: int = 0, limit: int = 25, region: str | None = None, sort_by: str | None = None, sort_order: str = "asc") -> list[Customer]:
         q = self.db.query(Customer)
         if region:
             q = q.filter(Customer.region == region)
+        if sort_by and sort_by in SORTABLE_FIELDS:
+            col = getattr(Customer, sort_by)
+            q = q.order_by(asc(col) if sort_order == "asc" else desc(col))
         return q.offset(skip).limit(limit).all()
+
+    def count(self, region: str | None = None) -> int:
+        q = self.db.query(Customer)
+        if region:
+            q = q.filter(Customer.region == region)
+        return q.count()
 
     def get_by_id(self, id: int) -> Customer | None:
         return self.db.query(Customer).filter(Customer.id == id).first()
