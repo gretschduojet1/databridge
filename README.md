@@ -22,21 +22,18 @@ git clone git@github.com:gretschduojet1/databridge.git
 cd databridge
 ```
 
-**2. Configure environment**
+**2. Start the stack**
 ```bash
-cp .env.example .env
+./start.sh
 ```
 
-Edit `.env` if you want to change credentials. The defaults work out of the box for local development.
+This creates a `.env` from `.env.example` if one doesn't exist, then starts Docker. The defaults work out of the box for local development.
 
-**3. Start the stack**
-```bash
-docker compose up --build
-```
+> **Note:** Auto-creating `.env` is a convenience for this demo project. In a real environment you would provision secrets through your deployment platform (e.g. AWS Secrets Manager, environment variables set on the server) rather than deriving them from a file in the repo.
 
 First run pulls images and installs dependencies — takes a few minutes. Subsequent starts are fast.
 
-**4. Seed the database**
+**3. Seed the database**
 
 In a second terminal:
 ```bash
