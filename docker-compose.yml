@@ -2,18 +2,16 @@ services:
   db:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: databridge
-      POSTGRES_PASSWORD: databridge
-      POSTGRES_DB: databridge
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      # Postgres automatically runs any .sql files it finds here on first boot
-      # of a fresh volume. This is how we create our schemas and tables.
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U databridge"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -21,22 +19,20 @@ services:
   backend:
     build: ./backend
     environment:
-      # SQLAlchemy connection string — driver://user:pass@host/dbname
-      DATABASE_URL: postgresql://databridge:databridge@db/databridge
+      DATABASE_URL: ${DATABASE_URL}
+      SECRET_KEY: ${SECRET_KEY}
     volumes:
-      # Mount source code so uvicorn --reload picks up changes without rebuild
       - ./backend:/app
     ports:
       - "8000:8000"
     depends_on:
       db:
-        condition: service_healthy  # wait for Postgres to be ready, not just started
+        condition: service_healthy
 
   frontend:
     build: ./frontend
     volumes:
       - ./frontend:/app
-      # Prevent the host from overwriting the container's node_modules
       - /app/node_modules
     ports:
       - "5173:5173"

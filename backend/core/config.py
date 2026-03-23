@@ -10,10 +10,8 @@ class Settings(BaseSettings):
     Locally, you can put them in a .env file and pydantic reads that too.
     """
 
-    database_url: str = "postgresql://databridge:databridge@localhost/databridge"
-
-    # We'll use these in Phase 3 when we add JWT auth
-    secret_key: str = "change-me-in-production"
+    database_url: str
+    secret_key: str
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
 
