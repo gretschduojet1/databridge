@@ -1,27 +1,24 @@
 <script>
-  let ready = false
-
-  async function checkApi() {
-    try {
-      const res = await fetch('http://localhost:8000/health')
-      const data = await res.json()
-      ready = data.status === 'ok'
-    } catch {
-      ready = false
-    }
-  }
-
-  checkApi()
+  import { isAuthenticated, logout } from './lib/auth'
+  import Login from './components/Login.svelte'
 </script>
 
-<main class="min-h-screen flex flex-col items-center justify-center">
-  <div class="bg-white rounded-mac shadow-sm border border-surface-100 px-12 py-10 flex flex-col items-center gap-4">
-    <h1 class="text-2xl font-semibold tracking-tight text-surface-900">Databridge</h1>
-    <p class="text-surface-400 text-sm">
-      API status:
-      <span class={ready ? 'text-green-500' : 'text-red-400'}>
-        {ready ? 'connected' : 'unavailable'}
-      </span>
-    </p>
+{#if $isAuthenticated}
+  <div class="min-h-screen bg-surface-50">
+    <header class="bg-white border-b border-surface-100 px-6 py-4 flex items-center justify-between">
+      <h1 class="text-base font-semibold text-surface-900">Databridge</h1>
+      <button
+        on:click={logout}
+        class="text-xs text-surface-400 hover:text-surface-600 transition-colors"
+      >
+        Sign out
+      </button>
+    </header>
+
+    <main class="p-6">
+      <p class="text-sm text-surface-500">Dashboard coming soon.</p>
+    </main>
   </div>
-</main>
+{:else}
+  <Login />
+{/if}
