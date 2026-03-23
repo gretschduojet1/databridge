@@ -13,9 +13,11 @@ _handlers: dict[str, list] = {}
 
 def on(event: str) -> Callable[[Callable], Callable]:
     """Decorator to register a Celery task as the handler for an event."""
+
     def decorator(task: Callable) -> Callable:
         _handlers.setdefault(event, []).append(task)
         return task
+
     return decorator
 
 

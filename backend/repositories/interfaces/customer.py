@@ -6,8 +6,12 @@ from schemas.customer import CustomerCreate
 
 class CustomerRepositoryProtocol(Protocol):
     def get_all(
-        self, skip: int = 0, limit: int = 25, region: str | None = None,
-        sort_by: str | None = None, sort_order: str = "asc",
+        self,
+        skip: int = 0,
+        limit: int = 25,
+        region: str | None = None,
+        sort_by: str | None = None,
+        sort_order: str = "asc",
     ) -> list[Customer]: ...
     def count(self, region: str | None = None) -> int: ...
     def get_by_id(self, id: int) -> Customer | None: ...

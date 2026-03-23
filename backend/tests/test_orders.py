@@ -6,17 +6,28 @@ from schemas.enums import Category, Region
 
 
 def _create_customer(client: TestClient, suffix: str = "") -> int:
-    r = client.post("/customers/", json={
-        "name": f"Customer{suffix}", "email": f"c{suffix}@example.com", "region": Region.WEST,
-    })
+    r = client.post(
+        "/customers/",
+        json={
+            "name": f"Customer{suffix}",
+            "email": f"c{suffix}@example.com",
+            "region": Region.WEST,
+        },
+    )
     return r.json()["id"]
 
 
 def _create_product(client: TestClient, suffix: str = "") -> int:
-    r = client.post("/products/", json={
-        "sku": f"SKU-{suffix}", "name": f"Product{suffix}",
-        "category": Category.OFFICE, "stock_qty": 100, "reorder_level": 10,
-    })
+    r = client.post(
+        "/products/",
+        json={
+            "sku": f"SKU-{suffix}",
+            "name": f"Product{suffix}",
+            "category": Category.OFFICE,
+            "stock_qty": 100,
+            "reorder_level": 10,
+        },
+    )
     return r.json()["id"]
 
 
@@ -44,7 +55,8 @@ def test_get_order_by_id(client: TestClient) -> None:
     cid = _create_customer(client, "ord2")
     pid = _create_product(client, "ord2")
     created = client.post(
-        "/orders/", json={"customer_id": cid, "product_id": pid, "quantity": 1, "unit_price": "19.99"},
+        "/orders/",
+        json={"customer_id": cid, "product_id": pid, "quantity": 1, "unit_price": "19.99"},
     ).json()
 
     response = client.get(f"/orders/{created['id']}")

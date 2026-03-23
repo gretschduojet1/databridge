@@ -8,7 +8,7 @@ import tasks.exports
 import tasks.reports
 import tasks.sweeper  # noqa: F401
 from core.middleware import SecurityHeadersMiddleware
-from routes import auth, customers, jobs, orders, products, reports
+from routes import auth, customers, jobs, orders, products, reports, stores
 
 limiter = Limiter(key_func=get_remote_address)
 
@@ -35,6 +35,7 @@ app.include_router(products.router, prefix="/products", tags=["products"])
 app.include_router(orders.router, prefix="/orders", tags=["orders"])
 app.include_router(reports.router, prefix="/reports", tags=["reports"])
 app.include_router(jobs.router, prefix="/jobs", tags=["jobs"])
+app.include_router(stores.router, prefix="/stores", tags=["stores"])
 
 
 @app.get("/health", tags=["meta"])

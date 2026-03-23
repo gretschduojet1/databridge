@@ -28,13 +28,7 @@ class PostgresJobRepository:
         return self.db.get(Job, job_id)
 
     def list(self, skip: int = 0, limit: int = 25) -> list[Job]:
-        return (
-            self.db.query(Job)
-            .order_by(Job.created_at.desc())
-            .offset(skip)
-            .limit(limit)
-            .all()
-        )
+        return self.db.query(Job).order_by(Job.created_at.desc()).offset(skip).limit(limit).all()
 
     def set_running(self, job_id: str) -> None:
         self._update(job_id, {"status": JobStatus.running})

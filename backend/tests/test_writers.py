@@ -17,7 +17,7 @@ def test_text_writer_columns_and_rows() -> None:
     lines = list(csv.reader(io.StringIO(text), delimiter="\t"))
     assert lines[0] == COLS
     assert lines[1] == ["1", "Alice", "99.5"]
-    assert lines[2] == ["2", "Bob", ""]      # None → empty string
+    assert lines[2] == ["2", "Bob", ""]  # None → empty string
 
 
 def test_text_writer_content_type() -> None:
@@ -28,7 +28,7 @@ def test_text_writer_content_type() -> None:
 def test_excel_writer_returns_valid_xlsx() -> None:
     data = ExcelWriter().write(COLS, ROWS)
     assert isinstance(data, bytes)
-    assert data[:2] == b"PK"   # xlsx is a zip file
+    assert data[:2] == b"PK"  # xlsx is a zip file
 
 
 def test_excel_writer_content_type() -> None:

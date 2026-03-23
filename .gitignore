@@ -9,3 +9,6 @@ celerybeat-schedule
 
 # Node
 node_modules/
+
+# Airflow runtime artifacts
+airflow/logs/

@@ -27,13 +27,20 @@ REGIONS = ["Northeast", "Southeast", "Midwest", "West"]
 CATEGORIES = ["Electronics", "Office", "Supplies"]
 
 PRODUCTS = [
-    ("Wireless Mouse", "Electronics"), ("USB-C Hub", "Electronics"),
-    ("Mechanical Keyboard", "Electronics"), ("Monitor Stand", "Electronics"),
-    ("Webcam HD", "Electronics"), ("Laptop Sleeve", "Supplies"),
-    ("Desk Lamp", "Office"), ("Whiteboard", "Office"),
-    ("Standing Desk Mat", "Office"), ("Cable Organizer", "Supplies"),
-    ("Sticky Notes Pack", "Supplies"), ("Ballpoint Pens (12)", "Supplies"),
-    ("Binder Clips", "Supplies"), ("Printer Paper (500)", "Supplies"),
+    ("Wireless Mouse", "Electronics"),
+    ("USB-C Hub", "Electronics"),
+    ("Mechanical Keyboard", "Electronics"),
+    ("Monitor Stand", "Electronics"),
+    ("Webcam HD", "Electronics"),
+    ("Laptop Sleeve", "Supplies"),
+    ("Desk Lamp", "Office"),
+    ("Whiteboard", "Office"),
+    ("Standing Desk Mat", "Office"),
+    ("Cable Organizer", "Supplies"),
+    ("Sticky Notes Pack", "Supplies"),
+    ("Ballpoint Pens (12)", "Supplies"),
+    ("Binder Clips", "Supplies"),
+    ("Printer Paper (500)", "Supplies"),
     ("Label Maker", "Office"),
 ]
 
@@ -47,18 +54,22 @@ def seed(db: Session) -> None:
     db.commit()
 
     print("Seeding demo users...")
-    db.add(User(
-        email="admin@databridge.io",
-        hashed_password=hash_password("admin"),
-        role=Role.ADMIN,
-        created_at=datetime.now(UTC),
-    ))
-    db.add(User(
-        email="demo@databridge.io",
-        hashed_password=hash_password("demo"),
-        role=Role.VIEWER,
-        created_at=datetime.now(UTC),
-    ))
+    db.add(
+        User(
+            email="admin@databridge.io",
+            hashed_password=hash_password("admin"),
+            role=Role.ADMIN,
+            created_at=datetime.now(UTC),
+        )
+    )
+    db.add(
+        User(
+            email="demo@databridge.io",
+            hashed_password=hash_password("demo"),
+            role=Role.VIEWER,
+            created_at=datetime.now(UTC),
+        )
+    )
     db.commit()
 
     print("Seeding customers...")
@@ -78,7 +89,7 @@ def seed(db: Session) -> None:
     products = []
     for i, (name, category) in enumerate(PRODUCTS):
         p = Product(
-            sku=f"SKU-{i+1:04d}",
+            sku=f"SKU-{i + 1:04d}",
             name=name,
             category=category,
             stock_qty=random.randint(0, 500),

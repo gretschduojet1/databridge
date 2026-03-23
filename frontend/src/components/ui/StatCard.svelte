@@ -1,5 +1,5 @@
 <script lang="ts">
-  type ColorKey = 'indigo' | 'violet' | 'teal' | 'rose' | 'amber'
+  type ColorKey = 'indigo' | 'violet' | 'teal' | 'rose' | 'amber' | 'sky'
   interface PaletteEntry { wrap: string; icon: string }
 
   export let label: string
@@ -14,6 +14,7 @@
     teal:   { wrap: 'bg-teal-50',    icon: 'text-teal-500'   },
     rose:   { wrap: 'bg-rose-50',    icon: 'text-rose-500'   },
     amber:  { wrap: 'bg-amber-50',   icon: 'text-amber-500'  },
+    sky:    { wrap: 'bg-sky-50',     icon: 'text-sky-500'    },
   }
 
   $: p = palette[color] ?? palette.indigo

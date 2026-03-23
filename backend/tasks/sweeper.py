@@ -21,7 +21,7 @@ def sweep_stuck_jobs() -> dict[str, int]:
 
     task_map = {
         "generate_summary_report": generate_summary_report,
-        "export_resource":         export_resource,
+        "export_resource": export_resource,
     }
 
     db = SessionLocal()
@@ -33,11 +33,8 @@ def sweep_stuck_jobs() -> dict[str, int]:
         stuck = (
             db.query(Job)
             .filter(
-                (Job.status == JobStatus.pending) |
-                (
-                    (Job.status == JobStatus.running) &
-                    (Job.updated_at < stale_cutoff)
-                )
+                (Job.status == JobStatus.pending)
+                | ((Job.status == JobStatus.running) & (Job.updated_at < stale_cutoff))
             )
             .all()
         )

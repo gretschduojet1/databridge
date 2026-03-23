@@ -21,4 +21,7 @@ fi
 
 git config core.hooksPath .githooks
 
-docker compose up --build "$@"
+docker compose up --build --wait "$@"
+
+echo "Seeding users..."
+docker compose exec backend python seed_users.py

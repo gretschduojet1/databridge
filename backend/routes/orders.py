@@ -27,8 +27,13 @@ def list_orders(
 ) -> Page[OrderRead]:
     return Page(
         items=repo.get_all(
-            skip=skip, limit=limit, customer_id=customer_id,
-            date_from=date_from, date_to=date_to, sort_by=sort_by, sort_order=sort_order,
+            skip=skip,
+            limit=limit,
+            customer_id=customer_id,
+            date_from=date_from,
+            date_to=date_to,
+            sort_by=sort_by,
+            sort_order=sort_order,
         ),
         total=repo.count(customer_id=customer_id, date_from=date_from, date_to=date_to),
         skip=skip,

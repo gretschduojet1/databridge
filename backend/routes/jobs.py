@@ -36,7 +36,7 @@ def dispatch_export(
     """Enqueue a full dataset export. Result is emailed to the requesting user."""
     if resource not in ("customers", "products", "orders"):
         raise HTTPException(status_code=400, detail=f"Unknown resource: {resource}")
-    job_id  = str(uuid.uuid4())
+    job_id = str(uuid.uuid4())
     payload = {"resource": resource, "email": current_user.email, "format": writer.extension}
     job = repo.create(job_id, "export_resource", payload)
     dispatch("export.requested", {"job_id": job_id, **payload})

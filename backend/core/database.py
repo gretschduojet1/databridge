@@ -21,6 +21,7 @@ class Base(DeclarativeBase):
     All ORM models inherit from this single Base.
     SQLAlchemy uses it to track which classes map to which tables.
     """
+
     pass
 
 
