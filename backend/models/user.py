@@ -12,6 +12,6 @@ class User(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
-    role: Mapped[Role] = mapped_column(SAEnum(Role, schema="auth", name="user_role"), nullable=False, default=Role.VIEWER)
+    role: Mapped[Role] = mapped_column(SAEnum(Role, schema="auth", name="user_role", values_callable=lambda x: [e.value for e in x]), nullable=False, default=Role.VIEWER)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
