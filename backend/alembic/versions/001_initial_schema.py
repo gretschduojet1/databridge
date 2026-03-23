@@ -20,7 +20,7 @@ def upgrade() -> None:
     op.execute("CREATE SCHEMA IF NOT EXISTS inventory")
     op.execute("CREATE SCHEMA IF NOT EXISTS auth")
 
-    op.execute("CREATE TYPE auth.user_role AS ENUM ('admin', 'viewer')")
+    op.execute("CREATE TYPE IF NOT EXISTS auth.user_role AS ENUM ('admin', 'viewer')")
 
     op.create_table(
         "customers",
@@ -60,7 +60,7 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), primary_key=True),
         sa.Column("email", sa.String(255), unique=True, nullable=False),
         sa.Column("hashed_password", sa.String(255), nullable=False),
-        sa.Column("role", sa.Enum("admin", "viewer", name="user_role", schema="auth"), nullable=False, server_default="viewer"),
+        sa.Column("role", sa.Enum("admin", "viewer", name="user_role", schema="auth", create_type=False), nullable=False, server_default="viewer"),
         sa.Column("is_active", sa.Boolean(), nullable=False, server_default="true"),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         schema="auth",
