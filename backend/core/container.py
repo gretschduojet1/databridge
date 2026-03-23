@@ -25,12 +25,14 @@ from repositories.interfaces.job import JobRepositoryProtocol
 from repositories.interfaces.order import OrderRepositoryProtocol
 from repositories.interfaces.product import ProductRepositoryProtocol
 from repositories.interfaces.reports import ReportsRepositoryProtocol
+from repositories.interfaces.store import StoreRepositoryProtocol
 from repositories.interfaces.user import UserRepositoryProtocol
 from repositories.postgres.customer import PostgresCustomerRepository
 from repositories.postgres.job import PostgresJobRepository
 from repositories.postgres.order import PostgresOrderRepository
 from repositories.postgres.product import PostgresProductRepository
 from repositories.postgres.reports import PostgresReportsRepository
+from repositories.postgres.store import PostgresStoreRepository
 from repositories.postgres.user import PostgresUserRepository
 from writers.excel import ExcelWriter
 from writers.interfaces.writer import WriterProtocol
@@ -62,6 +64,10 @@ def get_reports_repo(db: Session = Depends(get_db)) -> ReportsRepositoryProtocol
 
 def get_job_repo(db: Session = Depends(get_db)) -> JobRepositoryProtocol:
     return PostgresJobRepository(db)
+
+
+def get_store_repo(db: Session = Depends(get_db)) -> StoreRepositoryProtocol:
+    return PostgresStoreRepository(db)
 
 
 def get_user_repo(db: Session = Depends(get_db)) -> UserRepositoryProtocol:

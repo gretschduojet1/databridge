@@ -25,12 +25,8 @@ class Order(Base):
     __table_args__: ClassVar[dict] = {"schema": "sales"}  # type: ignore[misc]
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    customer_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("customers.customers.id"), nullable=False
-    )
-    product_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("inventory.products.id"), nullable=False
-    )
+    customer_id: Mapped[int] = mapped_column(Integer, ForeignKey("customers.customers.id"), nullable=False)
+    product_id: Mapped[int] = mapped_column(Integer, ForeignKey("inventory.products.id"), nullable=False)
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
     unit_price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
     ordered_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))

@@ -3,7 +3,7 @@ import io
 
 
 class TextWriter:
-    extension    = "txt"
+    extension = "txt"
     content_type = "text/plain"
 
     def write(self, columns: list[str], rows: list) -> bytes:

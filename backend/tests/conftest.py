@@ -13,7 +13,7 @@ from main import app
 from models.user import User
 from schemas.enums import Role
 
-SCHEMAS = ["customers", "inventory", "sales", "auth", "workers"]
+SCHEMAS = ["customers", "inventory", "sales", "auth", "workers", "stores"]
 
 engine = create_engine(
     "sqlite:///:memory:",

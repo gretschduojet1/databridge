@@ -12,8 +12,12 @@ class PostgresCustomerRepository:
         self.db = db
 
     def get_all(
-        self, skip: int = 0, limit: int = 25, region: str | None = None,
-        sort_by: str | None = None, sort_order: str = "asc",
+        self,
+        skip: int = 0,
+        limit: int = 25,
+        region: str | None = None,
+        sort_by: str | None = None,
+        sort_order: str = "asc",
     ) -> list[Customer]:
         q = self.db.query(Customer)
         if region:

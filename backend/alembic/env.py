@@ -7,6 +7,7 @@ import models.customer
 import models.job
 import models.order
 import models.product
+import models.stock_projection
 import models.user  # noqa: F401
 from alembic import context
 from core.config import settings
@@ -49,7 +50,8 @@ def run_migrations_online() -> None:
             # Tells autogenerate to look inside our custom schemas, not just public
             include_object=lambda obj, name, type_, reflected, compare_to: (
                 getattr(obj, "schema", None) in (None, "customers", "sales", "inventory", "auth", "workers")
-                if type_ == "table" else True
+                if type_ == "table"
+                else True
             ),
         )
         with context.begin_transaction():

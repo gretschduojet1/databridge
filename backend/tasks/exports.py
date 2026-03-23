@@ -15,29 +15,29 @@ from writers.factory import get_writer
 _ExportRepo = CustomerRepositoryProtocol | ProductRepositoryProtocol | OrderRepositoryProtocol
 _REPO_FACTORY: dict[str, Callable[[Session], _ExportRepo]] = {
     "customers": get_customer_repo,
-    "products":  get_product_repo,
-    "orders":    get_order_repo,
+    "products": get_product_repo,
+    "orders": get_order_repo,
 }
 
 
 @on("export.requested")
 @celery_app.task
 def export_resource(payload: dict) -> dict:
-    job_id   = payload["job_id"]
+    job_id = payload["job_id"]
     resource = payload["resource"]
     email_to = payload["email"]
-    fmt      = payload.get("format", "xlsx")
+    fmt = payload.get("format", "xlsx")
 
-    db   = SessionLocal()
+    db = SessionLocal()
     repo = PostgresJobRepository(db)
 
     try:
         repo.set_running(job_id)
 
-        resource_repo      = _REPO_FACTORY[resource](db)
-        columns, rows      = resource_repo.export_all()
-        writer             = get_writer(fmt)
-        data               = writer.write(columns, rows)
+        resource_repo = _REPO_FACTORY[resource](db)
+        columns, rows = resource_repo.export_all()
+        writer = get_writer(fmt)
+        data = writer.write(columns, rows)
 
         filename = f"{resource}_export.{writer.extension}"
         get_mailer().send(

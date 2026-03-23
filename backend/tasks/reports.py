@@ -21,7 +21,10 @@ def generate_summary_report(payload: dict) -> dict:
         time.sleep(2)
 
         from sqlalchemy import text
-        result = db.execute(text("""
+
+        result = (
+            db.execute(
+                text("""
             SELECT
                 COUNT(*)                                          AS total_orders,
                 SUM(quantity * unit_price)                        AS total_revenue,
@@ -30,11 +33,15 @@ def generate_summary_report(payload: dict) -> dict:
                 (SELECT COUNT(*) FROM inventory.products
                   WHERE stock_qty <= reorder_level)               AS low_stock_count
             FROM sales.orders
-        """)).mappings().one()
+        """)
+            )
+            .mappings()
+            .one()
+        )
 
         summary = {
-            "total_orders":    int(result["total_orders"]),
-            "total_revenue":   float(result["total_revenue"] or 0),
+            "total_orders": int(result["total_orders"]),
+            "total_revenue": float(result["total_revenue"] or 0),
             "avg_order_value": float(result["avg_order_value"] or 0),
             "total_customers": int(result["total_customers"]),
             "low_stock_count": int(result["low_stock_count"]),

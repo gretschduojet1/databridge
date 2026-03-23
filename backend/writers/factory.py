@@ -4,7 +4,7 @@ from writers.text import TextWriter
 
 _registry: dict[str, WriterProtocol] = {
     "xlsx": ExcelWriter(),
-    "txt":  TextWriter(),
+    "txt": TextWriter(),
 }
 
 

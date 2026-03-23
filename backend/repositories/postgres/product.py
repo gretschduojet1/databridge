@@ -12,8 +12,12 @@ class PostgresProductRepository:
         self.db = db
 
     def get_all(
-        self, skip: int = 0, limit: int = 25, category: str | None = None,
-        sort_by: str | None = None, sort_order: str = "asc",
+        self,
+        skip: int = 0,
+        limit: int = 25,
+        category: str | None = None,
+        sort_by: str | None = None,
+        sort_order: str = "asc",
     ) -> list[Product]:
         q = self.db.query(Product)
         if category:
@@ -43,8 +47,13 @@ class PostgresProductRepository:
         columns = ["ID", "SKU", "Name", "Category", "Stock", "Reorder At", "Updated"]
         rows = (
             self.db.query(
-                Product.id, Product.sku, Product.name, Product.category,
-                Product.stock_qty, Product.reorder_level, Product.updated_at,
+                Product.id,
+                Product.sku,
+                Product.name,
+                Product.category,
+                Product.stock_qty,
+                Product.reorder_level,
+                Product.updated_at,
             )
             .order_by(Product.name)
             .all()

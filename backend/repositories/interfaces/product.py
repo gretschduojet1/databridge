@@ -6,8 +6,12 @@ from schemas.product import ProductCreate
 
 class ProductRepositoryProtocol(Protocol):
     def get_all(
-        self, skip: int = 0, limit: int = 25, category: str | None = None,
-        sort_by: str | None = None, sort_order: str = "asc",
+        self,
+        skip: int = 0,
+        limit: int = 25,
+        category: str | None = None,
+        sort_by: str | None = None,
+        sort_order: str = "asc",
     ) -> list[Product]: ...
     def count(self, category: str | None = None) -> int: ...
     def get_by_id(self, id: int) -> Product | None: ...

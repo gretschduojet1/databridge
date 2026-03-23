@@ -11,8 +11,11 @@ def test_list_products_empty(client: TestClient) -> None:
 
 def test_create_product(client: TestClient) -> None:
     payload = {
-        "sku": "ELEC-001", "name": "Laptop",
-        "category": Category.ELECTRONICS, "stock_qty": 50, "reorder_level": 10,
+        "sku": "ELEC-001",
+        "name": "Laptop",
+        "category": Category.ELECTRONICS,
+        "stock_qty": 50,
+        "reorder_level": 10,
     }
     response = client.post("/products/", json=payload)
     assert response.status_code == 201
@@ -39,14 +42,26 @@ def test_get_product_not_found(client: TestClient) -> None:
 
 
 def test_filter_products_by_category(client: TestClient) -> None:
-    client.post("/products/", json={
-        "sku": "SUP-001", "name": "Stapler",
-        "category": Category.SUPPLIES, "stock_qty": 100, "reorder_level": 20,
-    })
-    client.post("/products/", json={
-        "sku": "ELEC-002", "name": "Monitor",
-        "category": Category.ELECTRONICS, "stock_qty": 15, "reorder_level": 3,
-    })
+    client.post(
+        "/products/",
+        json={
+            "sku": "SUP-001",
+            "name": "Stapler",
+            "category": Category.SUPPLIES,
+            "stock_qty": 100,
+            "reorder_level": 20,
+        },
+    )
+    client.post(
+        "/products/",
+        json={
+            "sku": "ELEC-002",
+            "name": "Monitor",
+            "category": Category.ELECTRONICS,
+            "stock_qty": 15,
+            "reorder_level": 3,
+        },
+    )
 
     response = client.get("/products/?category=Supplies")
     assert response.status_code == 200

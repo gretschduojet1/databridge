@@ -15,8 +15,8 @@ class SmtpMailer:
         content_type: str | None = None,
     ) -> None:
         msg = EmailMessage()
-        msg["From"]    = settings.mail_from
-        msg["To"]      = to
+        msg["From"] = settings.mail_from
+        msg["To"] = to
         msg["Subject"] = subject
         msg.set_content(body)
 
