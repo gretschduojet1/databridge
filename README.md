@@ -22,14 +22,21 @@ git clone git@github.com:gretschduojet1/databridge.git
 cd databridge
 ```
 
-**2. Start the stack**
+**2. Configure environment**
+```bash
+cp .env.example .env
+```
+
+Edit `.env` if you want to change credentials. The defaults work out of the box for local development.
+
+**3. Start the stack**
 ```bash
 docker compose up --build
 ```
 
 First run pulls images and installs dependencies — takes a few minutes. Subsequent starts are fast.
 
-**3. Seed the database**
+**4. Seed the database**
 
 In a second terminal:
 ```bash
