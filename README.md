@@ -79,6 +79,7 @@ databridge/
 │   │   ├── interfaces/    # Protocol contracts
 │   │   └── postgres/      # Postgres implementations
 │   ├── routes/            # FastAPI route handlers
+│   ├── alembic/           # database migrations
 │   ├── main.py            # app entry point
 │   └── seed.py            # sample data generator
 ├── frontend/
@@ -87,7 +88,7 @@ databridge/
 │       ├── components/
 │       └── lib/           # auth store, API client
 └── db/
-    └── init.sql           # Postgres schema
+    └── init.sql           # reference schema (Alembic owns migrations)
 ```
 
 ---
@@ -131,18 +132,19 @@ docker compose exec db psql -U databridge -d databridge
 ## Roadmap
 
 **Phase 1 — Docker + Database + Seed Data** ✅
-- Three-service Docker stack (db, backend, frontend)
-- Postgres schema with three simulated source systems
-- FastAPI with repository pattern, Pydantic DTOs, Protocol interfaces
-- Seed script generating realistic sample data
-- Test infrastructure with pytest
+- Three-service Docker stack (db, backend, frontend) ✅
+- Postgres schema with three simulated source systems ✅
+- FastAPI with repository pattern, Pydantic DTOs, Protocol interfaces ✅
+- Seed script generating realistic sample data ✅
+- Test infrastructure with pytest ✅
 
-**Phase 2 — Auth + API Completion** 🔧 *(in progress)*
+**Phase 2 — Auth + API Completion** ✅
 - JWT authentication with role-based access ✅
 - Rate limiting on login ✅
 - Svelte login page with protected app shell ✅
-- Sorting, filtering, and pagination on all list endpoints
-- Aggregation endpoints (sales totals, inventory summary, revenue over time)
+- Sorting, filtering, and pagination on all list endpoints ✅
+- Aggregation endpoints (sales totals, inventory summary, revenue over time) ✅
+- Alembic database migrations ✅
 
 **Phase 3 — Svelte UI**
 - Dashboard with table views
