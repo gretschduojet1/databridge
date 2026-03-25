@@ -1,10 +1,10 @@
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from models.customer import Customer
 from models.order import Order
 from models.product import Product
 from models.stock_projection import StockProjection
+from repositories.postgres.customer_table import CustomerRow
 from schemas.reports import (
     LowStockRow,
     MonthlyRevenueRow,
@@ -22,9 +22,9 @@ class PostgresReportsRepository:
 
     def sales_by_region(self) -> list[SalesByRegionRow]:
         rows = (
-            self.db.query(Customer.region, func.sum(Order.quantity * Order.unit_price).label("revenue"))
-            .join(Order, Order.customer_id == Customer.id)
-            .group_by(Customer.region)
+            self.db.query(CustomerRow.region, func.sum(Order.quantity * Order.unit_price).label("revenue"))
+            .join(Order, Order.customer_id == CustomerRow.id)
+            .group_by(CustomerRow.region)
             .order_by(func.sum(Order.quantity * Order.unit_price).desc())
             .all()
         )
@@ -145,7 +145,7 @@ class PostgresReportsRepository:
     def summary(self) -> SummaryRow:
         total_revenue = self.db.query(func.sum(Order.quantity * Order.unit_price)).scalar() or 0
         total_orders = self.db.query(func.count(Order.id)).scalar() or 0
-        total_customers = self.db.query(func.count(Customer.id)).scalar() or 0
+        total_customers = self.db.query(func.count(CustomerRow.id)).scalar() or 0
         total_products = self.db.query(func.count(Product.id)).scalar() or 0
         low_stock_count = (
             self.db.query(func.count(Product.id)).filter(Product.stock_qty <= Product.reorder_level).scalar() or 0

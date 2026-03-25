@@ -9,8 +9,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from core.database import Base
 
 if TYPE_CHECKING:
-    from models.customer import Customer
     from models.product import Product
+    from repositories.postgres.customer_table import CustomerRow
 
 
 class Order(Base):
@@ -33,5 +33,5 @@ class Order(Base):
 
     # SQLAlchemy relationships let you traverse associations in Python:
     # order.customer.name, order.product.sku — no manual joins needed
-    customer: Mapped[Customer] = relationship("Customer")
+    customer: Mapped[CustomerRow] = relationship("CustomerRow")
     product: Mapped[Product] = relationship("Product")

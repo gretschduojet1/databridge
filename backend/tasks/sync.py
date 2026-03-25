@@ -6,7 +6,7 @@ from faker import Faker
 from core.celery_app import celery_app
 from core.database import SessionLocal
 from core.events import on
-from models.customer import Customer
+from repositories.postgres.customer_table import CustomerRow
 from repositories.postgres.job import PostgresJobRepository
 from schemas.enums import Region
 
@@ -37,7 +37,7 @@ def simulate_customer_sync(payload: dict) -> dict:
         inserted = 0
 
         for _ in range(batch_size):
-            customer = Customer(
+            customer = CustomerRow(
                 name=fake.name(),
                 email=fake.unique.email(),
                 region=fake.random_element(regions).value,

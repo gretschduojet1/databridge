@@ -20,6 +20,7 @@ from sqlalchemy.orm import Session
 from core.database import get_db
 from mailers.interfaces.mailer import MailerProtocol
 from mailers.smtp import SmtpMailer
+from repositories.interfaces.connection import DataConnectionProtocol
 from repositories.interfaces.customer import CustomerRepositoryProtocol
 from repositories.interfaces.job import JobRepositoryProtocol
 from repositories.interfaces.order import OrderRepositoryProtocol
@@ -28,12 +29,16 @@ from repositories.interfaces.reports import ReportsRepositoryProtocol
 from repositories.interfaces.store import StoreRepositoryProtocol
 from repositories.interfaces.user import UserRepositoryProtocol
 from repositories.postgres.customer import PostgresCustomerRepository
+from repositories.postgres.customer_table import (
+    CustomerRow as _CustomerRow,  # noqa: F401 — registers with SQLAlchemy mapper
+)
 from repositories.postgres.job import PostgresJobRepository
 from repositories.postgres.order import PostgresOrderRepository
 from repositories.postgres.product import PostgresProductRepository
 from repositories.postgres.reports import PostgresReportsRepository
 from repositories.postgres.store import PostgresStoreRepository
 from repositories.postgres.user import PostgresUserRepository
+from repositories.sqlalchemy.connection import SQLAlchemyConnection
 from writers.excel import ExcelWriter
 from writers.interfaces.writer import WriterProtocol
 
@@ -46,8 +51,20 @@ def get_mailer() -> MailerProtocol:
     return SmtpMailer()
 
 
-def get_customer_repo(db: Session = Depends(get_db)) -> CustomerRepositoryProtocol:
-    return PostgresCustomerRepository(db)
+def get_connection(db: Session = Depends(get_db)) -> DataConnectionProtocol:
+    # Swap this one line to change the ORM across the entire customer resource.
+    # Everything downstream (routes, repository, domain model) is untouched.
+    return SQLAlchemyConnection(db)
+    # return TortoiseConnection()  # from repositories.tortoise.connection import TortoiseConnection
+
+
+def get_customer_repo(conn: DataConnectionProtocol = Depends(get_connection)) -> CustomerRepositoryProtocol:
+    return PostgresCustomerRepository(conn)
+
+
+def make_customer_repo(db: Session) -> CustomerRepositoryProtocol:
+    """For use outside FastAPI DI (e.g. Celery tasks) where Depends() doesn't run."""
+    return PostgresCustomerRepository(SQLAlchemyConnection(db))
 
 
 def get_product_repo(db: Session = Depends(get_db)) -> ProductRepositoryProtocol:
