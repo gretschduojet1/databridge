@@ -13,10 +13,10 @@ from sqlalchemy.orm import Session
 
 from core.database import SessionLocal
 from core.security import hash_password
-from models.customer import Customer
 from models.order import Order
 from models.product import Product
 from models.user import User
+from repositories.postgres.customer_table import CustomerRow
 from schemas.enums import Role
 
 fake = Faker()
@@ -48,7 +48,7 @@ PRODUCTS = [
 def seed(db: Session) -> None:
     print("Clearing existing data...")
     db.query(Order).delete()
-    db.query(Customer).delete()
+    db.query(CustomerRow).delete()
     db.query(Product).delete()
     db.query(User).delete()
     db.commit()
@@ -75,7 +75,7 @@ def seed(db: Session) -> None:
     print("Seeding customers...")
     customers = []
     for _ in range(200):
-        c = Customer(
+        c = CustomerRow(
             name=fake.name(),
             email=fake.unique.email(),
             region=random.choice(REGIONS),
