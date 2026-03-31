@@ -32,6 +32,8 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       SECRET_KEY: ${SECRET_KEY}
       REDIS_URL: ${REDIS_URL}
+      AWS_ENDPOINT_URL: http://localstack:4566
+      S3_PUBLIC_URL: http://localhost:4566
     volumes:
       - ./backend:/app
     ports:
@@ -54,6 +56,8 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       SECRET_KEY: ${SECRET_KEY}
       REDIS_URL: ${REDIS_URL}
+      AWS_ENDPOINT_URL: http://localstack:4566
+      S3_PUBLIC_URL: http://localhost:4566
     volumes:
       - ./backend:/app
     depends_on:
@@ -67,6 +71,24 @@ services:
     ports:
       - "1025:1025"   # SMTP
       - "8025:8025"   # Web UI
+
+  localstack:
+    image: localstack/localstack
+    ports:
+      - "4566:4566"   # LocalStack gateway — all AWS services on one port
+    environment:
+      SERVICES: s3,ses,ssm
+      DEFAULT_REGION: us-east-1
+      LOCALSTACK_AUTH_TOKEN: ${LOCALSTACK_AUTH_TOKEN:-}
+    volumes:
+      - localstack_data:/var/lib/localstack
+      - ./localstack/init:/etc/localstack/init/ready.d  # runs on startup
+    healthcheck:
+      test: ["CMD-SHELL", "awslocal s3 ls || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
 
   beat:
     build: ./backend
@@ -144,3 +166,4 @@ services:
 volumes:
   postgres_data:
   airflow_logs:
+  localstack_data:

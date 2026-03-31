@@ -2,6 +2,7 @@ from collections.abc import Callable
 
 from sqlalchemy.orm import Session
 
+from core import storage
 from core.celery_app import celery_app
 from core.container import get_mailer, get_order_repo, get_product_repo, make_customer_repo
 from core.database import SessionLocal
@@ -39,17 +40,21 @@ def export_resource(payload: dict) -> dict:
         writer = get_writer(fmt)
         data = writer.write(columns, rows)
 
-        filename = f"{resource}_export.{writer.extension}"
+        key = f"exports/{job_id}/{resource}_export.{writer.extension}"
+        storage.upload(key, data, writer.content_type)
+        download_url = storage.presign(key)
+
         get_mailer().send(
             to=email_to,
-            subject=f"Databridge — {resource.capitalize()} Export",
-            body=f"Your {resource} export is attached ({len(rows)} records).",
-            attachment=data,
-            filename=filename,
-            content_type=writer.content_type,
+            subject=f"Databridge — {resource.capitalize()} Export Ready",
+            body=(
+                f"Your {resource} export ({len(rows)} records) is ready.\n\n"
+                f"Download: {download_url}\n\n"
+                "Link expires in 24 hours."
+            ),
         )
 
-        result = {"resource": resource, "rows": len(rows), "emailed_to": email_to}
+        result = {"resource": resource, "rows": len(rows), "emailed_to": email_to, "s3_key": key}
         repo.set_success(job_id, result)
         return result
 

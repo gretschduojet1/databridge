@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
+from fastapi.openapi.models import Example
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
@@ -10,10 +11,19 @@ from schemas.user import LoginRequest, TokenResponse
 router = APIRouter()
 limiter = Limiter(key_func=get_remote_address)
 
+_LOGIN_EXAMPLES: dict[str, Example] = {
+    "admin": Example(summary="Admin — full access", value={"email": "admin@databridge.io", "password": "admin"}),
+    "viewer": Example(summary="Viewer — read-only", value={"email": "demo@databridge.io", "password": "demo"}),
+}
+
 
 @router.post("/login", response_model=TokenResponse)
 @limiter.limit("5/minute")
-def login(request: Request, body: LoginRequest, repo: UserRepositoryProtocol = Depends(get_user_repo)) -> TokenResponse:
+def login(
+    request: Request,
+    body: LoginRequest = Body(openapi_examples=_LOGIN_EXAMPLES),
+    repo: UserRepositoryProtocol = Depends(get_user_repo),
+) -> TokenResponse:
     user = repo.get_by_email(body.email)
 
     # Deliberately vague error — don't reveal whether the email exists

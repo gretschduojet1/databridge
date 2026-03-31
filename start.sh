@@ -25,3 +25,6 @@ docker compose up --build --wait "$@"
 
 echo "Seeding users..."
 docker compose exec backend python seed_users.py
+
+echo "Seeding raw tables (run Airflow DAGs at http://localhost:8080 to ingest)..."
+docker compose exec backend python seed_raw.py
