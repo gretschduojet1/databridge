@@ -118,6 +118,12 @@ services:
       # Pre-register the app DB as a named connection so DAGs can use
       # PostgresHook(postgres_conn_id='databridge_postgres')
       AIRFLOW_CONN_DATABRIDGE_POSTGRES: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db/${POSTGRES_DB}
+      AIRFLOW__SMTP__SMTP_HOST: mailhog
+      AIRFLOW__SMTP__SMTP_PORT: 1025
+      AIRFLOW__SMTP__SMTP_MAIL_FROM: airflow@databridge.io
+      AIRFLOW__SMTP__SMTP_SSL: 'false'
+      AIRFLOW__SMTP__SMTP_STARTTLS: 'false'
+      AIRFLOW_ALERT_EMAIL: ${AIRFLOW_ALERT_EMAIL}
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./airflow/entrypoint.sh:/opt/airflow/entrypoint.sh
