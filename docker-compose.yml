@@ -32,8 +32,8 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       SECRET_KEY: ${SECRET_KEY}
       REDIS_URL: ${REDIS_URL}
-      AWS_ENDPOINT_URL: http://localstack:4566
-      S3_PUBLIC_URL: http://localhost:4566
+      AWS_ENDPOINT_URL: ${AWS_ENDPOINT_URL:-http://localstack:4566}
+      S3_PUBLIC_URL: ${S3_PUBLIC_URL:-http://localhost:4566}
     volumes:
       - ./backend:/app
     ports:
@@ -56,8 +56,8 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       SECRET_KEY: ${SECRET_KEY}
       REDIS_URL: ${REDIS_URL}
-      AWS_ENDPOINT_URL: http://localstack:4566
-      S3_PUBLIC_URL: http://localhost:4566
+      AWS_ENDPOINT_URL: ${AWS_ENDPOINT_URL:-http://localstack:4566}
+      S3_PUBLIC_URL: ${S3_PUBLIC_URL:-http://localhost:4566}
     volumes:
       - ./backend:/app
     depends_on:
