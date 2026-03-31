@@ -19,6 +19,12 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
 
+    # S3 — bucket name and optional LocalStack override
+    s3_bucket: str = "databridge-exports"
+    s3_export_expiry: int = 86400  # pre-signed URL TTL in seconds (24 h)
+    aws_endpoint_url: str = ""       # internal Docker endpoint for uploads (http://localstack:4566 in dev)
+    s3_public_url: str = ""          # browser-reachable endpoint for pre-signed URLs (http://localhost:4566 in dev)
+
     class Config:
         env_file = ".env"  # optional local override, ignored if file doesn't exist
 
