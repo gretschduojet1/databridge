@@ -8,7 +8,10 @@ import tasks.exports
 import tasks.reports
 import tasks.sweeper  # noqa: F401
 from core.middleware import SecurityHeadersMiddleware
-from routes import auth, customers, jobs, orders, products, reports, stores
+from core.ssm import load_into_settings
+
+load_into_settings()
+from routes import auth, customers, jobs, orders, products, reports, stores  # noqa: E402
 
 limiter = Limiter(key_func=get_remote_address)
 
