@@ -228,16 +228,6 @@ docker compose exec db psql -U databridge -d databridge
 - Jobs page in the UI: dispatch panel, live status polling, result/error display, active/failed counts in sidebar
 - Flower monitoring dashboard at http://localhost:5555
 
-**Phase 6 — AWS Integration (LocalStack)** ✅
-- LocalStack running S3, SSM, and SES — full local AWS emulation, no account required for basic use
-- Export jobs upload files to S3 (`databridge-exports` bucket) instead of attaching to emails
-- Pre-signed download URLs emailed to the requesting user (24-hour expiry)
-- SSM Parameter Store seeded with `SECRET_KEY`, `DATABASE_URL`, `REDIS_URL` — ready for production secrets management
-- `AWS_ENDPOINT_URL` and `S3_PUBLIC_URL` are env-var driven so the same codebase works against LocalStack or real AWS without code changes
-- Swagger UI auth switched to HTTP Bearer — copy a token from `/auth/login` and paste it into Authorize
-- Login endpoint shows clickable example credentials in Swagger (`openapi_examples`)
-- Login page demo credential rows are clickable — selecting one fills the form automatically
-
 **Phase 5 — Airflow ETL + Stores** ✅
 - Raw landing-zone schema (`raw.*`) simulating unnormalized exports from CRM, WMS, and OMS
 - Four Airflow DAGs: ingest customers, products, orders, and warehouse stock
@@ -245,3 +235,14 @@ docker compose exec db psql -U databridge -d databridge
 - Stores page: per-store inventory with search, region filter, low stock indicators, and detail panel
 - Dashboard inventory projections: Airflow computes stockout forecasts nightly from 365-day sales velocity
 - Projection table shows avg units/day, days until stockout, projected date, and velocity trend (accelerating / steady / slowing)
+
+**Phase 6 — AWS Integration (LocalStack)** ✅
+- LocalStack running S3, SSM, and SES — full local AWS emulation, no account required for basic use
+- Export jobs upload files to S3 (`databridge-exports` bucket) instead of attaching to emails
+- Pre-signed download URLs emailed to the requesting user (24-hour expiry)
+- App fetches `SECRET_KEY`, `DATABASE_URL`, `REDIS_URL` from SSM Parameter Store at startup — falls back to env vars if SSM is unavailable
+- `AWS_ENDPOINT_URL` and `S3_PUBLIC_URL` are env-var driven so the same codebase works against LocalStack or real AWS without code changes
+- Swagger UI auth switched to HTTP Bearer — copy a token from `/auth/login` and paste it into Authorize
+- Login endpoint shows clickable example credentials in Swagger (`openapi_examples`)
+- Login page demo credential rows are clickable — selecting one fills the form automatically
+- `start.sh` seeds raw tables automatically so Airflow DAGs are ready to run on first boot
