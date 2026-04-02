@@ -13,8 +13,8 @@ Transform steps:
   - warehouse_bin      dropped (WMS-internal)
   - last_sync          dropped
 
-Idempotency: uses workers.ingestion_watermarks to track the last processed
-raw.wms_inventory.id. Only rows with id > last_id are fetched each run.
+Idempotency: uses workers.ingestion_watermarks (last_seen_at) to fetch
+only rows where created_at > last_seen_at each run.
 """
 
 from __future__ import annotations
@@ -23,6 +23,8 @@ from datetime import datetime, timezone
 
 from airflow.decorators import dag, task
 from airflow.providers.postgres.hooks.postgres import PostgresHook
+
+from ingestion_utils import finish_run, start_run
 
 SOURCE = "wms_inventory"
 
@@ -40,22 +42,22 @@ def ingest_products_dag() -> None:
         hook = PostgresHook(postgres_conn_id="databridge_postgres")
 
         watermark = hook.get_first(
-            "SELECT last_id FROM workers.ingestion_watermarks WHERE source = %s",
+            "SELECT last_seen_at FROM workers.ingestion_watermarks WHERE source = %s",
             parameters=(SOURCE,),
         )
-        last_id = watermark[0] if watermark else 0
+        last_seen_at = watermark[0] if watermark else "1970-01-01T00:00:00+00:00"
 
         rows = hook.get_records(
             """
-            SELECT id, item_code, item_name, department, quantity_on_hand, reorder_point
+            SELECT id, item_code, item_name, department, quantity_on_hand, reorder_point, created_at
             FROM raw.wms_inventory
-            WHERE id > %s
-            ORDER BY id
+            WHERE created_at > %s
+            ORDER BY created_at, id
             """,
-            parameters=(last_id,),
+            parameters=(last_seen_at,),
         )
         return {
-            "last_id": last_id,
+            "last_seen_at": str(last_seen_at),
             "records": [
                 {
                     "raw_id": row[0],
@@ -64,6 +66,7 @@ def ingest_products_dag() -> None:
                     "department": row[3],
                     "quantity_on_hand": row[4],
                     "reorder_point": row[5],
+                    "created_at": str(row[6]),
                 }
                 for row in rows
             ],
@@ -72,7 +75,7 @@ def ingest_products_dag() -> None:
     @task
     def transform(payload: dict) -> dict:
         return {
-            "last_id": payload["last_id"],
+            "last_seen_at": payload["last_seen_at"],
             "records": [
                 {
                     "raw_id": r["raw_id"],
@@ -82,6 +85,7 @@ def ingest_products_dag() -> None:
                     "stock_qty": max(0, r["quantity_on_hand"]),
                     "reorder_level": r["reorder_point"],
                     "updated_at": datetime.now(timezone.utc).isoformat(),
+                    "source_created_at": r["created_at"],
                 }
                 for r in payload["records"]
             ],
@@ -112,22 +116,25 @@ def ingest_products_dag() -> None:
                 r,
             )
 
-        max_id = max(r["raw_id"] for r in records)
+        max_seen_at = max(r["source_created_at"] for r in records)
         cursor.execute(
             """
-            INSERT INTO workers.ingestion_watermarks (source, last_id, rows_processed, updated_at)
+            INSERT INTO workers.ingestion_watermarks (source, last_seen_at, rows_processed, updated_at)
             VALUES (%s, %s, %s, NOW())
             ON CONFLICT (source) DO UPDATE
-                SET last_id        = EXCLUDED.last_id,
+                SET last_seen_at   = EXCLUDED.last_seen_at,
                     rows_processed = ingestion_watermarks.rows_processed + EXCLUDED.rows_processed,
                     updated_at     = NOW()
             """,
-            (SOURCE, max_id, len(records)),
+            (SOURCE, max_seen_at, len(records)),
         )
 
         conn.commit()
         cursor.close()
-        print(f"Loaded {len(records)} products. Watermark advanced to id={max_id}")
+
+        run_id = start_run(SOURCE, len(records))
+        finish_run(run_id, len(records), max_seen_at)
+        print(f"Loaded {len(records)} products. Watermark advanced to {max_seen_at}")
 
     raw = extract()
     normalized = transform(raw)

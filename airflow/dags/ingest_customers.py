@@ -10,10 +10,10 @@ Transform steps:
   - Parse join_date text → TIMESTAMPTZ → created_at
   - Drop phone and account_tier (not part of our data model)
 
-Idempotency: uses workers.ingestion_watermarks to track the last processed
-raw.crm_customers.id. Only rows with id > last_id are fetched each run,
-simulating reading from a source system we don't own (no ingested_at column
-on their tables).
+Idempotency: uses workers.ingestion_watermarks to track last_seen_at —
+the MAX(created_at) of the last processed batch. Each run fetches only
+rows where created_at > last_seen_at, simulating a source system we
+don't own and cannot write to.
 """
 
 from __future__ import annotations
@@ -22,6 +22,8 @@ from datetime import datetime
 
 from airflow.decorators import dag, task
 from airflow.providers.postgres.hooks.postgres import PostgresHook
+
+from ingestion_utils import finish_run, start_run
 
 SOURCE = "crm_customers"
 
@@ -46,22 +48,23 @@ def ingest_customers_dag() -> None:
         hook = PostgresHook(postgres_conn_id="databridge_postgres")
 
         watermark = hook.get_first(
-            "SELECT last_id FROM workers.ingestion_watermarks WHERE source = %s",
+            "SELECT last_seen_at FROM workers.ingestion_watermarks WHERE source = %s",
             parameters=(SOURCE,),
         )
-        last_id = watermark[0] if watermark else 0
+        # Falls back to epoch if no watermark exists — first run fetches everything.
+        last_seen_at = watermark[0] if watermark else "1970-01-01T00:00:00+00:00"
 
         rows = hook.get_records(
             """
-            SELECT id, full_name, email_address, territory, join_date
+            SELECT id, full_name, email_address, territory, join_date, created_at
             FROM raw.crm_customers
-            WHERE id > %s
-            ORDER BY id
+            WHERE created_at > %s
+            ORDER BY created_at, id
             """,
-            parameters=(last_id,),
+            parameters=(last_seen_at,),
         )
         return {
-            "last_id": last_id,
+            "last_seen_at": str(last_seen_at),
             "records": [
                 {
                     "raw_id": row[0],
@@ -69,6 +72,7 @@ def ingest_customers_dag() -> None:
                     "email_address": row[2],
                     "territory": row[3],
                     "join_date": row[4],
+                    "created_at": str(row[5]),
                 }
                 for row in rows
             ],
@@ -86,9 +90,10 @@ def ingest_customers_dag() -> None:
                     "email": r["email_address"].lower().strip(),
                     "region": TERRITORY_MAP.get(r["territory"].strip().upper(), r["territory"]),
                     "created_at": r["join_date"].strip()[:19],
+                    "source_created_at": r["created_at"],
                 }
             )
-        return {"last_id": payload["last_id"], "records": normalized}
+        return {"last_seen_at": payload["last_seen_at"], "records": normalized}
 
     @task
     def load(payload: dict) -> None:
@@ -112,22 +117,25 @@ def ingest_customers_dag() -> None:
                 r,
             )
 
-        max_id = max(r["raw_id"] for r in records)
+        max_seen_at = max(r["source_created_at"] for r in records)
         cursor.execute(
             """
-            INSERT INTO workers.ingestion_watermarks (source, last_id, rows_processed, updated_at)
+            INSERT INTO workers.ingestion_watermarks (source, last_seen_at, rows_processed, updated_at)
             VALUES (%s, %s, %s, NOW())
             ON CONFLICT (source) DO UPDATE
-                SET last_id        = EXCLUDED.last_id,
+                SET last_seen_at   = EXCLUDED.last_seen_at,
                     rows_processed = ingestion_watermarks.rows_processed + EXCLUDED.rows_processed,
                     updated_at     = NOW()
             """,
-            (SOURCE, max_id, len(records)),
+            (SOURCE, max_seen_at, len(records)),
         )
 
         conn.commit()
         cursor.close()
-        print(f"Loaded {len(records)} customers. Watermark advanced to id={max_id}")
+
+        run_id = start_run(SOURCE, len(records))
+        finish_run(run_id, len(records), max_seen_at)
+        print(f"Loaded {len(records)} customers. Watermark advanced to {max_seen_at}")
 
     raw = extract()
     normalized = transform(raw)

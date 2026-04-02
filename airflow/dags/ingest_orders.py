@@ -17,8 +17,8 @@ Transform steps:
   - payment_method    dropped
   - source_channel    dropped
 
-Idempotency: uses workers.ingestion_watermarks to track the last processed
-raw.oms_transactions.id. Only rows with id > last_id are fetched each run.
+Idempotency: uses workers.ingestion_watermarks (last_seen_at) to fetch
+only rows where created_at > last_seen_at each run.
 """
 
 from __future__ import annotations
@@ -27,6 +27,8 @@ from datetime import datetime
 
 from airflow.decorators import dag, task
 from airflow.providers.postgres.hooks.postgres import PostgresHook
+
+from ingestion_utils import finish_run, start_run
 
 SOURCE = "oms_transactions"
 
@@ -44,23 +46,23 @@ def ingest_orders_dag() -> None:
         hook = PostgresHook(postgres_conn_id="databridge_postgres")
 
         watermark = hook.get_first(
-            "SELECT last_id FROM workers.ingestion_watermarks WHERE source = %s",
+            "SELECT last_seen_at FROM workers.ingestion_watermarks WHERE source = %s",
             parameters=(SOURCE,),
         )
-        last_id = watermark[0] if watermark else 0
+        last_seen_at = watermark[0] if watermark else "1970-01-01T00:00:00+00:00"
 
         rows = hook.get_records(
             """
             SELECT id, transaction_id, customer_email, item_code,
-                   quantity_ordered, sale_price, transaction_date
+                   quantity_ordered, sale_price, transaction_date, created_at
             FROM raw.oms_transactions
-            WHERE id > %s
-            ORDER BY id
+            WHERE created_at > %s
+            ORDER BY created_at, id
             """,
-            parameters=(last_id,),
+            parameters=(last_seen_at,),
         )
         return {
-            "last_id": last_id,
+            "last_seen_at": str(last_seen_at),
             "records": [
                 {
                     "raw_id": row[0],
@@ -70,6 +72,7 @@ def ingest_orders_dag() -> None:
                     "quantity_ordered": row[4],
                     "sale_price": float(row[5]),
                     "transaction_date": row[6],
+                    "created_at": str(row[7]),
                 }
                 for row in rows
             ],
@@ -79,7 +82,7 @@ def ingest_orders_dag() -> None:
     def transform(payload: dict) -> dict:
         records = payload["records"]
         if not records:
-            return {"last_id": payload["last_id"], "records": [], "max_raw_id": payload["last_id"]}
+            return {"last_seen_at": payload["last_seen_at"], "records": [], "max_seen_at": payload["last_seen_at"]}
 
         hook = PostgresHook(postgres_conn_id="databridge_postgres")
 
@@ -104,8 +107,6 @@ def ingest_orders_dag() -> None:
             product_id = product_map.get(r["item_code"].strip().upper())
 
             if customer_id is None or product_id is None:
-                # Unresolvable FK — source system won't resend this row, so we
-                # advance the watermark past it rather than retrying forever.
                 skipped += 1
                 continue
 
@@ -117,22 +118,22 @@ def ingest_orders_dag() -> None:
                     "quantity": r["quantity_ordered"],
                     "unit_price": r["sale_price"],
                     "ordered_at": r["transaction_date"].strip()[:19],
+                    "source_created_at": r["created_at"],
                 }
             )
 
         if skipped:
             print(f"Skipped {skipped} rows with unresolvable customer_email or item_code")
 
-        # Always advance to the max ID seen in this batch, including skipped rows.
-        max_raw_id = max(r["raw_id"] for r in records)
-        return {"last_id": payload["last_id"], "records": normalized, "max_raw_id": max_raw_id}
+        max_seen_at = max(r["created_at"] for r in records)
+        return {"last_seen_at": payload["last_seen_at"], "records": normalized, "max_seen_at": max_seen_at}
 
     @task
     def load(payload: dict) -> None:
         records = payload["records"]
-        max_raw_id = payload["max_raw_id"]
+        max_seen_at = payload["max_seen_at"]
 
-        if not records and max_raw_id == payload["last_id"]:
+        if not records and max_seen_at == payload["last_seen_at"]:
             return
 
         hook = PostgresHook(postgres_conn_id="databridge_postgres")
@@ -152,19 +153,22 @@ def ingest_orders_dag() -> None:
 
         cursor.execute(
             """
-            INSERT INTO workers.ingestion_watermarks (source, last_id, rows_processed, updated_at)
+            INSERT INTO workers.ingestion_watermarks (source, last_seen_at, rows_processed, updated_at)
             VALUES (%s, %s, %s, NOW())
             ON CONFLICT (source) DO UPDATE
-                SET last_id        = EXCLUDED.last_id,
+                SET last_seen_at   = EXCLUDED.last_seen_at,
                     rows_processed = ingestion_watermarks.rows_processed + EXCLUDED.rows_processed,
                     updated_at     = NOW()
             """,
-            (SOURCE, max_raw_id, len(records)),
+            (SOURCE, max_seen_at, len(records)),
         )
 
         conn.commit()
         cursor.close()
-        print(f"Loaded {len(records)} orders. Watermark advanced to id={max_raw_id}")
+
+        run_id = start_run(SOURCE, len(records))
+        finish_run(run_id, len(records), max_seen_at)
+        print(f"Loaded {len(records)} orders. Watermark advanced to {max_seen_at}")
 
     raw = extract()
     normalized = transform(raw)

@@ -14,8 +14,8 @@ Transform steps:
   - qty_on_hand + reorder_level kept per store (not global defaults)
   - last_updated (text) parsed to timestamp for updated_at
 
-Idempotency: uses workers.ingestion_watermarks to track the last processed
-raw.warehouse_stock.id. Only rows with id > last_id are fetched each run.
+Idempotency: uses workers.ingestion_watermarks (last_seen_at) to fetch
+only rows where created_at > last_seen_at each run.
 """
 
 from __future__ import annotations
@@ -24,6 +24,8 @@ from datetime import datetime, timezone
 
 from airflow.decorators import dag, task
 from airflow.providers.postgres.hooks.postgres import PostgresHook
+
+from ingestion_utils import finish_run, start_run
 
 SOURCE = "warehouse_stock"
 
@@ -41,23 +43,23 @@ def ingest_warehouse_stock_dag() -> None:
         hook = PostgresHook(postgres_conn_id="databridge_postgres")
 
         watermark = hook.get_first(
-            "SELECT last_id FROM workers.ingestion_watermarks WHERE source = %s",
+            "SELECT last_seen_at FROM workers.ingestion_watermarks WHERE source = %s",
             parameters=(SOURCE,),
         )
-        last_id = watermark[0] if watermark else 0
+        last_seen_at = watermark[0] if watermark else "1970-01-01T00:00:00+00:00"
 
         rows = hook.get_records(
             """
             SELECT id, store_name, store_city, store_region,
-                   product_sku, qty_on_hand, reorder_level, last_updated
+                   product_sku, qty_on_hand, reorder_level, last_updated, created_at
             FROM raw.warehouse_stock
-            WHERE id > %s
-            ORDER BY id
+            WHERE created_at > %s
+            ORDER BY created_at, id
             """,
-            parameters=(last_id,),
+            parameters=(last_seen_at,),
         )
         return {
-            "last_id": last_id,
+            "last_seen_at": str(last_seen_at),
             "records": [
                 {
                     "raw_id": row[0],
@@ -68,6 +70,7 @@ def ingest_warehouse_stock_dag() -> None:
                     "qty_on_hand": row[5],
                     "reorder_level": row[6],
                     "last_updated": row[7],
+                    "created_at": str(row[8]),
                 }
                 for row in rows
             ],
@@ -77,7 +80,7 @@ def ingest_warehouse_stock_dag() -> None:
     def transform(payload: dict) -> dict:
         records = payload["records"]
         if not records:
-            return {"last_id": payload["last_id"], "stores": [], "stock": [], "max_raw_id": payload["last_id"]}
+            return {"last_seen_at": payload["last_seen_at"], "stores": [], "stock": [], "max_seen_at": payload["last_seen_at"]}
 
         hook = PostgresHook(postgres_conn_id="databridge_postgres")
 
@@ -113,27 +116,28 @@ def ingest_warehouse_stock_dag() -> None:
                     "qty_on_hand": max(0, r["qty_on_hand"]),
                     "reorder_level": r["reorder_level"],
                     "updated_at": now,
+                    "source_created_at": r["created_at"],
                 }
             )
 
         if skipped:
             print(f"Skipped {skipped} rows with unresolvable product_sku")
 
-        max_raw_id = max(r["raw_id"] for r in records)
+        max_seen_at = max(r["created_at"] for r in records)
         return {
-            "last_id": payload["last_id"],
+            "last_seen_at": payload["last_seen_at"],
             "stores": list(store_map.values()),
             "stock": stock_rows,
-            "max_raw_id": max_raw_id,
+            "max_seen_at": max_seen_at,
         }
 
     @task
     def load(payload: dict) -> None:
         stores = payload.get("stores", [])
         stock_rows = payload.get("stock", [])
-        max_raw_id = payload["max_raw_id"]
+        max_seen_at = payload["max_seen_at"]
 
-        if not stores and not stock_rows and max_raw_id == payload["last_id"]:
+        if not stores and not stock_rows and max_seen_at == payload["last_seen_at"]:
             return
 
         hook = PostgresHook(postgres_conn_id="databridge_postgres")
@@ -175,19 +179,22 @@ def ingest_warehouse_stock_dag() -> None:
 
         cursor.execute(
             """
-            INSERT INTO workers.ingestion_watermarks (source, last_id, rows_processed, updated_at)
+            INSERT INTO workers.ingestion_watermarks (source, last_seen_at, rows_processed, updated_at)
             VALUES (%s, %s, %s, NOW())
             ON CONFLICT (source) DO UPDATE
-                SET last_id        = EXCLUDED.last_id,
+                SET last_seen_at   = EXCLUDED.last_seen_at,
                     rows_processed = ingestion_watermarks.rows_processed + EXCLUDED.rows_processed,
                     updated_at     = NOW()
             """,
-            (SOURCE, max_raw_id, len(stock_rows)),
+            (SOURCE, max_seen_at, len(stock_rows)),
         )
 
         conn.commit()
         cursor.close()
-        print(f"Loaded {len(stock_rows)} stock rows. Watermark advanced to id={max_raw_id}")
+
+        run_id = start_run(SOURCE, len(stock_rows))
+        finish_run(run_id, len(stock_rows), max_seen_at)
+        print(f"Loaded {len(stock_rows)} stock rows. Watermark advanced to {max_seen_at}")
 
     raw = extract()
     transformed = transform(raw)
