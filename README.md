@@ -62,7 +62,7 @@ Each DAG uses an `ingested_at` watermark — rows with `ingested_at IS NULL` are
 | API Docs | http://localhost:8000/docs |
 | Airflow | http://localhost:8080 |
 | Flower (Celery monitor) | http://localhost:5555 |
-| MailHog (dev SMTP) | http://localhost:8025 |
+| Mailpit (dev SMTP) | http://localhost:8025 |
 | LocalStack (AWS emulator) | http://localhost:4566 |
 | Postgres | localhost:5432 |
 
@@ -222,7 +222,7 @@ docker compose exec db psql -U databridge -d databridge
 - Tasks: summary report generation, simulated customer sync from upstream CRM
 - Job status tracking (pending → running → success/failed) with Postgres persistence
 - Sweeper task: automatically re-enqueues stuck pending/running jobs every 60 seconds
-- Dataset export to Excel: dispatched as a background job, result emailed via MailHog
+- Dataset export to Excel: dispatched as a background job, result emailed via Mailpit
 - Writer abstraction (`WriterProtocol`) with Excel and text implementations, swappable in one place
 - Service container (`core/container.py`): all interface→implementation bindings centralized
 - Jobs page in the UI: dispatch panel, live status polling, result/error display, active/failed counts in sidebar
