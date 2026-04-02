@@ -66,7 +66,7 @@ services:
       redis:
         condition: service_healthy
 
-  mailhog:
+  mailpit:
     image: axllent/mailpit
     ports:
       - "1025:1025"   # SMTP
@@ -140,7 +140,7 @@ services:
       # Pre-register the app DB as a named connection so DAGs can use
       # PostgresHook(postgres_conn_id='databridge_postgres')
       AIRFLOW_CONN_DATABRIDGE_POSTGRES: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db/${POSTGRES_DB}
-      AIRFLOW__SMTP__SMTP_HOST: mailhog
+      AIRFLOW__SMTP__SMTP_HOST: mailpit
       AIRFLOW__SMTP__SMTP_PORT: 1025
       AIRFLOW__SMTP__SMTP_MAIL_FROM: airflow@databridge.io
       AIRFLOW__SMTP__SMTP_SSL: 'false'
