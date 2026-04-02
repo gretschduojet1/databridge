@@ -129,9 +129,9 @@ databridge/
 
 LocalStack runs S3, SSM, and SES locally so the full AWS-integrated workflow works without a real AWS account.
 
-**It is optional.** If `LOCALSTACK_AUTH_TOKEN` is blank or missing, the LocalStack container won't authenticate and export jobs will fail — but everything else (login, browsing data, Airflow DAGs, Celery jobs) works fine.
+**It is optional.** Without it, export jobs fall back to emailing the file as a direct attachment — all other features work normally.
 
-To use it, sign up at [localstack.cloud](https://localstack.cloud) (free tier available) and add your token to `.env`:
+To enable LocalStack, sign up at [localstack.cloud](https://localstack.cloud) (free tier available — no credit card required) and add your token to `.env`:
 ```
 LOCALSTACK_AUTH_TOKEN=your_token_here
 ```
