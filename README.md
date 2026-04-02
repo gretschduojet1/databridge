@@ -242,6 +242,7 @@ docker compose exec db psql -U databridge -d databridge
 - Pre-signed download URLs emailed to the requesting user (24-hour expiry)
 - App fetches `SECRET_KEY`, `DATABASE_URL`, `REDIS_URL` from SSM Parameter Store at startup — falls back to env vars if SSM is unavailable
 - `AWS_ENDPOINT_URL` and `S3_PUBLIC_URL` are env-var driven so the same codebase works against LocalStack or real AWS without code changes
+- Export jobs degrade gracefully — uploads to S3 and emails a pre-signed link when available, falls back to emailing the file as an attachment if S3 is unreachable
 - Swagger UI auth switched to HTTP Bearer — copy a token from `/auth/login` and paste it into Authorize
 - Login endpoint shows clickable example credentials in Swagger (`openapi_examples`)
 - Login page demo credential rows are clickable — selecting one fills the form automatically
