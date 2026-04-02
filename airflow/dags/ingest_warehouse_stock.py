@@ -14,7 +14,8 @@ Transform steps:
   - qty_on_hand + reorder_level kept per store (not global defaults)
   - last_updated (text) parsed to timestamp for updated_at
 
-Runs daily. Only processes rows where ingested_at IS NULL.
+Idempotency: uses workers.ingestion_watermarks to track the last processed
+raw.warehouse_stock.id. Only rows with id > last_id are fetched each run.
 """
 
 from __future__ import annotations
@@ -23,6 +24,8 @@ from datetime import datetime, timezone
 
 from airflow.decorators import dag, task
 from airflow.providers.postgres.hooks.postgres import PostgresHook
+
+SOURCE = "warehouse_stock"
 
 
 @dag(
@@ -34,39 +37,50 @@ from airflow.providers.postgres.hooks.postgres import PostgresHook
 )
 def ingest_warehouse_stock_dag() -> None:
     @task
-    def extract() -> list[dict]:
+    def extract() -> dict:
         hook = PostgresHook(postgres_conn_id="databridge_postgres")
+
+        watermark = hook.get_first(
+            "SELECT last_id FROM workers.ingestion_watermarks WHERE source = %s",
+            parameters=(SOURCE,),
+        )
+        last_id = watermark[0] if watermark else 0
+
         rows = hook.get_records(
             """
             SELECT id, store_name, store_city, store_region,
                    product_sku, qty_on_hand, reorder_level, last_updated
             FROM raw.warehouse_stock
-            WHERE ingested_at IS NULL
+            WHERE id > %s
             ORDER BY id
-            """
+            """,
+            parameters=(last_id,),
         )
-        return [
-            {
-                "raw_id": row[0],
-                "store_name": row[1],
-                "store_city": row[2],
-                "store_region": row[3],
-                "product_sku": row[4],
-                "qty_on_hand": row[5],
-                "reorder_level": row[6],
-                "last_updated": row[7],
-            }
-            for row in rows
-        ]
+        return {
+            "last_id": last_id,
+            "records": [
+                {
+                    "raw_id": row[0],
+                    "store_name": row[1],
+                    "store_city": row[2],
+                    "store_region": row[3],
+                    "product_sku": row[4],
+                    "qty_on_hand": row[5],
+                    "reorder_level": row[6],
+                    "last_updated": row[7],
+                }
+                for row in rows
+            ],
+        }
 
     @task
-    def transform(records: list[dict]) -> dict:
+    def transform(payload: dict) -> dict:
+        records = payload["records"]
         if not records:
-            return {"stores": [], "stock": []}
+            return {"last_id": payload["last_id"], "stores": [], "stock": [], "max_raw_id": payload["last_id"]}
 
         hook = PostgresHook(postgres_conn_id="databridge_postgres")
 
-        # Resolve SKUs to product IDs in bulk
         skus = list({r["product_sku"].strip().upper() for r in records})
         product_rows = hook.get_records(
             "SELECT sku, id FROM inventory.products WHERE sku = ANY(%s)",
@@ -74,7 +88,6 @@ def ingest_warehouse_stock_dag() -> None:
         )
         product_map = {row[0]: row[1] for row in product_rows}
 
-        # Deduplicate stores (last writer wins for city/region)
         store_map: dict[str, dict] = {}
         for r in records:
             name = r["store_name"].strip()
@@ -84,7 +97,6 @@ def ingest_warehouse_stock_dag() -> None:
                 "region": r["store_region"].strip(),
             }
 
-        # Build stock rows, skipping unresolvable SKUs
         now = datetime.now(timezone.utc).isoformat()
         stock_rows = []
         skipped = 0
@@ -107,13 +119,21 @@ def ingest_warehouse_stock_dag() -> None:
         if skipped:
             print(f"Skipped {skipped} rows with unresolvable product_sku")
 
-        return {"stores": list(store_map.values()), "stock": stock_rows}
+        max_raw_id = max(r["raw_id"] for r in records)
+        return {
+            "last_id": payload["last_id"],
+            "stores": list(store_map.values()),
+            "stock": stock_rows,
+            "max_raw_id": max_raw_id,
+        }
 
     @task
     def load(payload: dict) -> None:
         stores = payload.get("stores", [])
         stock_rows = payload.get("stock", [])
-        if not stores and not stock_rows:
+        max_raw_id = payload["max_raw_id"]
+
+        if not stores and not stock_rows and max_raw_id == payload["last_id"]:
             return
 
         hook = PostgresHook(postgres_conn_id="databridge_postgres")
@@ -121,7 +141,6 @@ def ingest_warehouse_stock_dag() -> None:
         cursor = conn.cursor()
         now = datetime.now(timezone.utc).isoformat()
 
-        # Upsert stores and collect name → id mapping
         store_id_map: dict[str, int] = {}
         for s in stores:
             cursor.execute(
@@ -137,7 +156,6 @@ def ingest_warehouse_stock_dag() -> None:
             )
             store_id_map[s["name"]] = cursor.fetchone()[0]
 
-        # Upsert stock rows
         for r in stock_rows:
             store_id = store_id_map.get(r["store_name"])
             if store_id is None:
@@ -154,13 +172,22 @@ def ingest_warehouse_stock_dag() -> None:
                 """,
                 {**r, "store_id": store_id},
             )
-            cursor.execute(
-                "UPDATE raw.warehouse_stock SET ingested_at = NOW() WHERE id = %s",
-                (r["raw_id"],),
-            )
+
+        cursor.execute(
+            """
+            INSERT INTO workers.ingestion_watermarks (source, last_id, rows_processed, updated_at)
+            VALUES (%s, %s, %s, NOW())
+            ON CONFLICT (source) DO UPDATE
+                SET last_id        = EXCLUDED.last_id,
+                    rows_processed = ingestion_watermarks.rows_processed + EXCLUDED.rows_processed,
+                    updated_at     = NOW()
+            """,
+            (SOURCE, max_raw_id, len(stock_rows)),
+        )
 
         conn.commit()
         cursor.close()
+        print(f"Loaded {len(stock_rows)} stock rows. Watermark advanced to id={max_raw_id}")
 
     raw = extract()
     transformed = transform(raw)
