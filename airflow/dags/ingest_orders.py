@@ -23,12 +23,14 @@ only rows where created_at > last_seen_at each run.
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from airflow.decorators import dag, task
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 
-from ingestion_utils import finish_run, start_run
+from ingestion_utils import checkpoint_run, complete_run_in_tx, fail_run, finish_run, start_run
+
+BATCH_SIZE = 50
 
 SOURCE = "oms_transactions"
 
@@ -38,7 +40,9 @@ SOURCE = "oms_transactions"
     schedule="@daily",
     start_date=datetime(2024, 1, 1),
     catchup=False,
+    max_active_runs=1,
     tags=["ingestion", "orders"],
+    default_args={"retries": 3, "retry_delay": timedelta(seconds=30)},
 )
 def ingest_orders_dag() -> None:
     @task
@@ -46,23 +50,37 @@ def ingest_orders_dag() -> None:
         hook = PostgresHook(postgres_conn_id="databridge_postgres")
 
         watermark = hook.get_first(
-            "SELECT last_seen_at FROM workers.ingestion_watermarks WHERE source = %s",
+            "SELECT last_raw_id FROM workers.ingestion_watermarks WHERE source = %s",
             parameters=(SOURCE,),
         )
-        last_seen_at = watermark[0] if watermark else "1970-01-01T00:00:00+00:00"
+        last_raw_id = watermark[0] if watermark else 0
 
-        rows = hook.get_records(
-            """
-            SELECT id, transaction_id, customer_email, item_code,
-                   quantity_ordered, sale_price, transaction_date, created_at
-            FROM raw.oms_transactions
-            WHERE created_at > %s
-            ORDER BY created_at, id
-            """,
-            parameters=(last_seen_at,),
-        )
+        try:
+            total_available = hook.get_first(
+                "SELECT COUNT(*) FROM raw.oms_transactions WHERE id > %s",
+                parameters=(last_raw_id,),
+            )[0]
+            rows = hook.get_records(
+                """
+                SELECT id, transaction_id, customer_email, item_code,
+                       quantity_ordered, sale_price, transaction_date, created_at
+                FROM raw.oms_transactions
+                WHERE id > %s
+                ORDER BY id
+                """,
+                parameters=(last_raw_id,),
+            )
+        except Exception as e:
+            raise
+
+        if len(rows) != total_available:
+            raise RuntimeError(
+                f"Extract mismatch for {SOURCE}: source has {total_available} rows, fetched {len(rows)}"
+            )
+
         return {
-            "last_seen_at": str(last_seen_at),
+            "last_raw_id": last_raw_id,
+            "total_available": total_available,
             "records": [
                 {
                     "raw_id": row[0],
@@ -82,7 +100,7 @@ def ingest_orders_dag() -> None:
     def transform(payload: dict) -> dict:
         records = payload["records"]
         if not records:
-            return {"last_seen_at": payload["last_seen_at"], "records": [], "max_seen_at": payload["last_seen_at"]}
+            return {"last_raw_id": payload["last_raw_id"], "total_available": payload["total_available"], "skipped": 0, "records": [], "max_raw_id": payload["last_raw_id"]}
 
         hook = PostgresHook(postgres_conn_id="databridge_postgres")
 
@@ -125,50 +143,81 @@ def ingest_orders_dag() -> None:
         if skipped:
             print(f"Skipped {skipped} rows with unresolvable customer_email or item_code")
 
-        max_seen_at = max(r["created_at"] for r in records)
-        return {"last_seen_at": payload["last_seen_at"], "records": normalized, "max_seen_at": max_seen_at}
+        max_raw_id = max(r["raw_id"] for r in records)
+        return {"last_raw_id": payload["last_raw_id"], "total_available": payload["total_available"], "skipped": skipped, "records": normalized, "max_raw_id": max_raw_id}
 
     @task
     def load(payload: dict) -> None:
-        records = payload["records"]
-        max_seen_at = payload["max_seen_at"]
+        hook = PostgresHook(postgres_conn_id="databridge_postgres")
 
-        if not records and max_seen_at == payload["last_seen_at"]:
+        watermark = hook.get_first(
+            "SELECT last_raw_id FROM workers.ingestion_watermarks WHERE source = %s",
+            parameters=(SOURCE,),
+        )
+        current_last_raw_id = watermark[0] if watermark else 0
+        records = [r for r in payload["records"] if r["raw_id"] > current_last_raw_id]
+        skipped = payload["skipped"]
+
+        if not records and payload["max_raw_id"] <= current_last_raw_id:
+            print(f"No new records for {SOURCE} — watermark already current.")
             return
 
-        hook = PostgresHook(postgres_conn_id="databridge_postgres")
-        conn = hook.get_conn()
-        cursor = conn.cursor()
+        run_id = start_run(SOURCE, len(records) + skipped)
+        total_processed = 0
+        batch_max_raw_id = current_last_raw_id
+        try:
 
-        for r in records:
-            cursor.execute(
-                """
-                INSERT INTO sales.orders
-                    (customer_id, product_id, quantity, unit_price, ordered_at)
-                VALUES
-                    (%(customer_id)s, %(product_id)s, %(quantity)s, %(unit_price)s, %(ordered_at)s)
-                """,
-                r,
-            )
+            for i in range(0, len(records), BATCH_SIZE):
+                batch = records[i : i + BATCH_SIZE]
+                is_last = i + BATCH_SIZE >= len(records)
+                conn = hook.get_conn()
+                cursor = conn.cursor()
 
-        cursor.execute(
-            """
-            INSERT INTO workers.ingestion_watermarks (source, last_seen_at, rows_processed, updated_at)
-            VALUES (%s, %s, %s, NOW())
-            ON CONFLICT (source) DO UPDATE
-                SET last_seen_at   = EXCLUDED.last_seen_at,
-                    rows_processed = ingestion_watermarks.rows_processed + EXCLUDED.rows_processed,
-                    updated_at     = NOW()
-            """,
-            (SOURCE, max_seen_at, len(records)),
-        )
+                for r in batch:
+                    cursor.execute(
+                        """
+                        INSERT INTO sales.orders
+                            (customer_id, product_id, quantity, unit_price, ordered_at)
+                        VALUES
+                            (%(customer_id)s, %(product_id)s, %(quantity)s, %(unit_price)s, %(ordered_at)s)
+                        """,
+                        r,
+                    )
 
-        conn.commit()
-        cursor.close()
+                batch_max_raw_id = max(r["raw_id"] for r in batch)
+                batch_max_seen_at = max(r["source_created_at"] for r in batch)
+                cursor.execute(
+                    """
+                    INSERT INTO workers.ingestion_watermarks (source, last_raw_id, last_seen_at, rows_processed, updated_at)
+                    VALUES (%s, %s, %s, %s, NOW())
+                    ON CONFLICT (source) DO UPDATE
+                        SET last_raw_id    = EXCLUDED.last_raw_id,
+                            last_seen_at   = EXCLUDED.last_seen_at,
+                            rows_processed = ingestion_watermarks.rows_processed + EXCLUDED.rows_processed,
+                            updated_at     = NOW()
+                    """,
+                    (SOURCE, batch_max_raw_id, batch_max_seen_at, len(batch)),
+                )
+                total_processed += len(batch)
+                if is_last:
+                    expected = len(records) + skipped
+                    if total_processed + skipped != expected:
+                        raise RuntimeError(
+                            f"Load mismatch for {SOURCE}: expected {expected}, "
+                            f"wrote {total_processed}, skipped {skipped}"
+                        )
+                    complete_run_in_tx(cursor, run_id, total_processed, skipped, batch_max_seen_at)
+                conn.commit()
+                cursor.close()
 
-        run_id = start_run(SOURCE, len(records))
-        finish_run(run_id, len(records), max_seen_at)
-        print(f"Loaded {len(records)} orders. Watermark advanced to {max_seen_at}")
+                if not is_last:
+                    checkpoint_run(run_id, total_processed)
+                print(f"  committed batch {i // BATCH_SIZE + 1}: {total_processed}/{len(records)} rows, last_raw_id={batch_max_raw_id}")
+
+            print(f"Loaded {total_processed} orders, skipped {skipped}.")
+        except Exception as e:
+            fail_run(run_id, str(e))
+            raise
 
     raw = extract()
     normalized = transform(raw)

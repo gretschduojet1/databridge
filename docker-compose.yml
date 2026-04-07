@@ -141,6 +141,7 @@ services:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
       AIRFLOW__WEBSERVER__SECRET_KEY: airflow-dev-secret-not-for-prod
+      AIRFLOW__API__AUTH_BACKENDS: airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session
       AIRFLOW_ADMIN_USERNAME: ${AIRFLOW_ADMIN_USERNAME:-admin}
       AIRFLOW_ADMIN_PASSWORD: ${AIRFLOW_ADMIN_PASSWORD:-admin}
       # Pre-register the app DB as a named connection so DAGs can use
@@ -152,6 +153,7 @@ services:
       AIRFLOW__SMTP__SMTP_SSL: 'false'
       AIRFLOW__SMTP__SMTP_STARTTLS: 'false'
       AIRFLOW_ALERT_EMAIL: ${AIRFLOW_ALERT_EMAIL}
+      INGEST_BATCH_SLEEP: ${INGEST_BATCH_SLEEP:-0.5}
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./airflow/entrypoint.sh:/opt/airflow/entrypoint.sh

@@ -24,7 +24,7 @@ cd databridge
 
 **2. Start the stack**
 ```bash
-./start.sh
+./scripts/start.sh
 ```
 
 This script:
@@ -94,7 +94,9 @@ All subsequent requests in that session will include the token automatically.
 ```
 databridge/
 ├── docker-compose.yml
-├── start.sh                   # one-command startup: starts stack, seeds users + raw tables
+├── scripts/
+│   ├── start.sh               # one-command startup: starts stack, seeds users + raw tables
+│   └── simulate_offline.sh    # resilience demo: partial ingestion failure + watermark-based recovery
 ├── localstack/
 │   └── init/                  # runs on LocalStack startup: creates S3 bucket, seeds SSM params
 ├── backend/
@@ -152,6 +154,76 @@ And ensure the host has valid AWS credentials (IAM role, `~/.aws/credentials`, o
 ```bash
 docker compose exec backend pytest
 ```
+
+---
+
+## Resilience Demo
+
+```bash
+./scripts/simulate_offline.sh         # lock fires after 500 rows (default)
+./scripts/simulate_offline.sh 300     # lock fires after 300 rows
+```
+
+`simulate_offline.sh` is an end-to-end demonstration of how the ingestion pipeline handles partial failures and recovers without re-processing data or permanently skipping records.
+
+### The core problem
+
+Raw source data arrives as flat, unnormalized exports. Before the pipeline can write a sales order, the customer and product it references must already exist in the normalized tables — those are foreign key constraints. If you run all four DAGs at once, orders that arrive before their customer has been written will be skipped permanently, because the watermark will have already advanced past them by the time the customer lands.
+
+The demo makes this failure mode explicit, then shows how to avoid it.
+
+### How watermarks work
+
+Every ingestion DAG reads from a shared watermark table (`workers.ingestion_watermarks`) keyed by source name:
+
+```
+source          last_raw_id   last_seen_at
+-----------     -----------   ----------------------------
+crm_customers   847           2026-04-06 14:22:11.304+00
+wms_inventory   10            2026-04-06 14:22:08.912+00
+```
+
+At the start of each run, the DAG reads `last_raw_id` and fetches only rows with `id > last_raw_id`. After each batch commits to the target table, `last_raw_id` advances to the highest `id` in that batch — atomically, in the same transaction. This means:
+
+- **Idempotent:** re-running a DAG after a clean finish does nothing — there are no new rows above the watermark.
+- **Resumable:** if the process dies mid-run, the watermark is frozen at the last successfully committed batch. The next run picks up exactly from there.
+- **No re-processing:** already-committed batches are never touched again, even across retries.
+
+### What the demo does
+
+The script runs in six steps:
+
+**Step 1 — Seed raw data.** Inserts 1,500 CRM customers, 10 WMS products, and 500 OMS orders into the raw landing-zone tables.
+
+**Step 2 — Trigger independent DAGs only.** Starts `ingest_customers` and `ingest_products` but deliberately holds back `ingest_orders` and `ingest_warehouse_stock`. Orders reference customers by email — if orders ran now, any order whose customer hadn't landed yet would be skipped and that skip would be permanent (the watermark would advance past it).
+
+**Step 3 — Fire a table lock mid-ingestion.** A background Postgres session polls `customers.customers` and, once the row count hits the threshold (default 500), grabs an `ACCESS EXCLUSIVE` lock on the table and holds it for 60 seconds. This simulates the target table going offline — a maintenance window, a long-running migration, or a schema change — while the ingestion DAG is actively writing.
+
+With the table locked, `ingest_customers` blocks the moment it tries to write its next batch. The Airflow task hangs, the `ingestion_runs` `processed` counter freezes, and the watermark stays at the last committed `last_raw_id`.
+
+**Step 4 — Kill the blocked session.** The script terminates both the blocked `ingest_customers` session and the locking session via `pg_terminate_backend`. Airflow marks the task as failed. The `ingestion_runs` row is updated to `status=failed` with the error detail in the `message` column. Crucially, the row is **not deleted or overwritten** — it's a permanent audit record showing the partial run and exactly how many rows were committed before the failure.
+
+**Step 5 — Watch the retry resume.** Airflow retries `ingest_customers` (configured `retries: 3`). When `load` starts, it re-reads the current watermark before doing anything else. The watermark reflects the last committed batch from the failed run, so `records` is filtered to `raw_id > current_last_raw_id`. Only the remaining rows are processed. A new `ingestion_runs` row is created for this attempt with `resumed_from_id` pointing to the failed row — the two runs form a linked chain in the audit log.
+
+**Step 6 — Run dependent DAGs.** Once all 1,500 customers are confirmed loaded, `ingest_orders` and `ingest_warehouse_stock` run. Because every customer email now exists, all 500 orders resolve their FK and `skipped=0`. `compute_stock_projections` runs last to update stockout forecasts from the new data.
+
+### The audit trail
+
+The `workers.ingestion_runs` table records every attempt:
+
+```
+id  source          status    message                 total  processed  skipped  resumed_from_id
+--  --------------  --------  ----------------------  -----  ---------  -------  ---------------
+1   crm_customers   failed    canceling statement...  1500   500        0        null
+2   crm_customers   complete  null                    1000   1000       0        1
+3   wms_inventory   complete  null                    10     10         0        null
+4   oms_transactions complete null                    500    500        0        null
+5   warehouse_stock  complete null                    100    100        0        null
+```
+
+The failed run and the successful retry are separate rows. The `resumed_from_id` FK links retry run #2 back to failed run #1. If a run fails multiple times before succeeding, each attempt points to its immediate predecessor — a linked list through the table.
+
+The Pipeline page in the UI polls `/pipeline/runs` every 2 seconds during active ingestion and displays this table live, including progress bars, percent complete, and "↩ resumed from #N" badges on retry runs.
 
 ---
 
@@ -246,4 +318,5 @@ docker compose exec db psql -U databridge -d databridge
 - Swagger UI auth switched to HTTP Bearer — copy a token from `/auth/login` and paste it into Authorize
 - Login endpoint shows clickable example credentials in Swagger (`openapi_examples`)
 - Login page demo credential rows are clickable — selecting one fills the form automatically
-- `start.sh` seeds raw tables automatically so Airflow DAGs are ready to run on first boot
+- `scripts/start.sh` seeds raw tables automatically so Airflow DAGs are ready to run on first boot
+- `scripts/simulate_offline.sh` — end-to-end resilience demo: triggers all four ingestion DAGs, interrupts `ingest_customers` mid-load by locking the target table after 500 rows commit, shows the watermark frozen at the last committed batch, then watches Airflow retry and resume from exactly that point
