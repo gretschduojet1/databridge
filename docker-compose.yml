@@ -34,6 +34,9 @@ services:
       REDIS_URL: ${REDIS_URL}
       AWS_ENDPOINT_URL: ${AWS_ENDPOINT_URL:-http://localstack:4566}
       S3_PUBLIC_URL: ${S3_PUBLIC_URL:-http://localhost:4566}
+      SMTP_HOST: ${SMTP_HOST:-mailpit}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      MAIL_FROM: ${MAIL_FROM:-noreply@databridge.io}
     volumes:
       - ./backend:/app
     ports:
@@ -58,6 +61,9 @@ services:
       REDIS_URL: ${REDIS_URL}
       AWS_ENDPOINT_URL: ${AWS_ENDPOINT_URL:-http://localstack:4566}
       S3_PUBLIC_URL: ${S3_PUBLIC_URL:-http://localhost:4566}
+      SMTP_HOST: ${SMTP_HOST:-mailpit}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      MAIL_FROM: ${MAIL_FROM:-noreply@databridge.io}
     volumes:
       - ./backend:/app
     depends_on:
@@ -66,8 +72,8 @@ services:
       redis:
         condition: service_healthy
 
-  mailhog:
-    image: mailhog/mailhog
+  mailpit:
+    image: axllent/mailpit
     ports:
       - "1025:1025"   # SMTP
       - "8025:8025"   # Web UI
@@ -135,17 +141,19 @@ services:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
       AIRFLOW__WEBSERVER__SECRET_KEY: airflow-dev-secret-not-for-prod
+      AIRFLOW__API__AUTH_BACKENDS: airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session
       AIRFLOW_ADMIN_USERNAME: ${AIRFLOW_ADMIN_USERNAME:-admin}
       AIRFLOW_ADMIN_PASSWORD: ${AIRFLOW_ADMIN_PASSWORD:-admin}
       # Pre-register the app DB as a named connection so DAGs can use
       # PostgresHook(postgres_conn_id='databridge_postgres')
       AIRFLOW_CONN_DATABRIDGE_POSTGRES: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db/${POSTGRES_DB}
-      AIRFLOW__SMTP__SMTP_HOST: mailhog
+      AIRFLOW__SMTP__SMTP_HOST: mailpit
       AIRFLOW__SMTP__SMTP_PORT: 1025
       AIRFLOW__SMTP__SMTP_MAIL_FROM: airflow@databridge.io
       AIRFLOW__SMTP__SMTP_SSL: 'false'
       AIRFLOW__SMTP__SMTP_STARTTLS: 'false'
       AIRFLOW_ALERT_EMAIL: ${AIRFLOW_ALERT_EMAIL}
+      INGEST_BATCH_SLEEP: ${INGEST_BATCH_SLEEP:-0.5}
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./airflow/entrypoint.sh:/opt/airflow/entrypoint.sh
